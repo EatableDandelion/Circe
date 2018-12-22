@@ -94,5 +94,3 @@ install:
 clean:
 	del $(ODIR)\\*.o *.exe
 
-#http://www.cs.colby.edu/maxwell/courses/tutorials/maketutor/
-#http://nuclear.mutantstargoat.com/articles/make/
