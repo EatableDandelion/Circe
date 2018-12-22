@@ -1,0 +1,19 @@
+Could Not Find C:\Users\Marc\Documents\CGeekOut\Manure\src\obj\*.o
+Could Not Find C:\Users\Marc\Documents\CGeekOut\Manure\src\*.exe
+In file included from C:/Program Files (x86)/mingw-w64/i686-8.1.0-posix-dwarf-rt_v6-rev0/mingw32/lib/gcc/i686-w64-mingw32/8.1.0/include/c++/memory:80,
+                 from ../include/MathObj.h:6,
+                 from main.cpp:2:
+C:/Program Files (x86)/mingw-w64/i686-8.1.0-posix-dwarf-rt_v6-rev0/mingw32/lib/gcc/i686-w64-mingw32/8.1.0/include/c++/bits/unique_ptr.h: In instantiation of 'typename std::_MakeUniq<_Tp>::__single_object std::make_unique(_Args&& ...) [with _Tp = Manure::Event; _Args = {Manure::Event&}; typename std::_MakeUniq<_Tp>::__single_object = std::unique_ptr<Manure::Event>]':
+../include/Event.h:59:41:   required from here
+C:/Program Files (x86)/mingw-w64/i686-8.1.0-posix-dwarf-rt_v6-rev0/mingw32/lib/gcc/i686-w64-mingw32/8.1.0/include/c++/bits/unique_ptr.h:831:30: error: invalid new-expression of abstract class type 'Manure::Event'
+     { return unique_ptr<_Tp>(new _Tp(std::forward<_Args>(__args)...)); }
+                              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from main.cpp:3:
+../include/Event.h:19:9: note:   because the following virtual functions are pure within 'Manure::Event':
+  struct Event
+         ^~~~~
+../include/Event.h:21:16: note: 	'virtual void Manure::Event::notify()'
+   virtual void notify()=0;
+                ^~~~~~
+mingw32-make.exe[1]: *** [makefile:24: obj/main.o] Error 1
+mingw32-make.exe: *** [makefile:37: over] Error 2
