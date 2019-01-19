@@ -60,7 +60,7 @@ newproject:
 	move temp $(NAME)\\src
 	ren $(NAME)\\src\\temp makefile
 
-#Create a new class (h & cpp files) make CLASS=... newfile
+#Create a new class (h & cpp files) make CLASS=... newclass
 newclass:
 	@echo off
 	@echo #pragma once> $(CLASS).h

@@ -1,32 +1,57 @@
+#define CIRCE_PROFILING
+#define CIRCE_DEBUG
+#define CIRCE_VERBOSE
+
 #include "Circe.h"
 #include <memory>
 #include <iostream>
 #include <string>
-
 #include <fstream>
 #include <sstream>
+#include <vector>
 
-using namespace std;
-using namespace Circe;
 
 
 int main()
 {
+
+	using namespace Circe;
 	
-	ifstream file;
-	file.open("TestShader.txt");
-	string uniformName = "uniform";
-	size_t uniformLocation = file.find()
-	std::string line;
-		Shader tmp;
-		if(std::getline(stream, line))
+
+	CIRCE_INITPROFILER;
+	{
+		CIRCE_PROFILEBLOCK;
 		{
-			stringstream iss(line);
-			string s;
-			getline(iss, s, 'vec3');
-			cout << s << endl;
+			for(int k = 0; k<5; k++){
+				CIRCE_PROFILEBLOCK;
+				for(int i = 0; i<1000; i++)
+				{
+					std::cout << "1";
+				}
+			}
 		}
-	while()
+		{
+			CIRCE_PROFILEBLOCK;
+			
+			{
+				CIRCE_PROFILEBLOCK;
+				for(int i = 0; i<600; i++)
+				{
+					std::cout << "2";
+				}
+			}
+			
+			{
+				CIRCE_PROFILEBLOCK;
+				for(int i = 0; i<800; i++)
+				{
+					std::cout << "2";
+				}
+			}
+		}
+	}
 	
+
+
 	return 0;
 }

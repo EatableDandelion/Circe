@@ -1140,6 +1140,11 @@ namespace Circe
 				position+=v;
 			}
 			
+			void resize(const float& scaleRatio)
+			{
+				scale*=scaleRatio;
+			}
+			
 			Mat<4> getTransformMatrix() const
 			{
 				return (Mat44::positionMatrix(position)) * (Mat44::rotationMatrix(rotation)) * (Mat44::scaleMatrix(scale));
