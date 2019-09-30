@@ -116,6 +116,12 @@ namespace Circe
 		return res;
 	}
 	
+	template<std::size_t N>
+	Vec<N> operator+(const float& b, const Vec<N>& a)
+	{
+		return a+b;
+	}
+	
 	//Multiply float to this vector
 	template<std::size_t N>
 	Vec<N> operator*(const Vec<N>& a, const float& b)
@@ -126,6 +132,12 @@ namespace Circe
 			res(i)=a(i)*b;
 		}
 		return res;
+	}
+	
+	template<std::size_t N>
+	Vec<N> operator*(const float& b, const Vec<N>& a)
+	{
+		return a*b;
 	}
 	
 	//Divide float to this vector
@@ -996,6 +1008,11 @@ namespace Circe
 				return res;
 			}
 			
+			float get(const int& i, const int& j) const
+			{
+				return data[i][j];
+			}
+			
 		private:
 			float data[N][M];
 	};
@@ -1076,6 +1093,100 @@ namespace Circe
 				return m;
 			}
 			
+			static Mat44 rotationMatrix(const Vec<2>& fwdAxis)
+			{
+				Vec<2> f = fwdAxis;
+				normalize(f);
+				
+				Mat44 rotationMatrix;
+
+				rotationMatrix(0,0) = f(0);
+				rotationMatrix(0,1) = f(1);
+				rotationMatrix(1,0) = -f(0);
+				rotationMatrix(0,1) = f(1);
+				
+				rotationMatrix(2,2) = 1.0f;
+				rotationMatrix(3,3) = 1.0f;
+				return rotationMatrix;
+			}
+			
+			static Mat44 rotationMatrix(const Vec<3>& leftAxis, const Vec<3>& fwdAxis){
+				Vec<3> l = leftAxis;
+				normalize(l);
+				Vec<3> f = fwdAxis;
+				if(l.dot(fwdAxis) != 0)
+				{
+					f = f - (f.dot(l))*l;
+				}
+				normalize(f);
+				Vec<3> u = cross(l, f);
+				
+				Mat44 rotationMatrix;
+				for(int j = 0; j<3; j++)
+				{
+					rotationMatrix(0,j) = l(j);
+					rotationMatrix(1,j) = f(j);
+					rotationMatrix(2,j) = u(j);
+				}
+				rotationMatrix(3,3) = 1.0f;
+				return rotationMatrix;
+			}
+			
+			Complex toComplex() const
+			{
+				return Complex(get(0,0), get(0,1));//Much simpler than the Quaternion!
+			}
+			
+			Quaternion toQuaternion() const
+			{
+				float trace = get(0, 0) + get(1, 1) + get(2, 2);
+				
+				float x,y,z,w;
+				
+				if(trace > 0)
+				{
+					float s = 0.5f / (float)std::sqrt(trace+ 1.0f);
+					w = 0.25f / s;
+					x = (get(1, 2) - get(2, 1)) * s;
+					y = (get(2, 0) - get(0, 2)) * s;
+					z = (get(0, 1) - get(1, 0)) * s;
+				}
+				else
+				{
+					if(get(0, 0) > get(1, 1) && get(0, 0) > get(2, 2))
+					{
+						float s = 2.0f * (float)std::sqrt(1.0f + get(0, 0) - get(1, 1) - get(2, 2));
+						w = (get(1, 2) - get(2, 1)) / s;
+						x = 0.25f * s;
+						y = (get(1, 0) + get(0, 1)) / s;
+						z = (get(2, 0) + get(0, 2)) / s;
+					}
+					else if(get(1, 1) > get(2, 2))
+					{
+						float s = 2.0f * (float)std::sqrt(1.0f + get(1, 1) - get(0, 0) - get(2, 2));
+						w = (get(2, 0) - get(0, 2)) / s;
+						x = (get(1, 0) + get(0, 1)) / s;
+						y = 0.25f * s;
+						z = (get(2, 1) + get(1, 2)) / s;
+					}
+					else
+					{
+						float s = 2.0f * (float)std::sqrt(1.0f + get(2, 2) - get(0, 0) - get(1, 1));
+						w = (get(0, 1) - get(1, 0) ) / s;
+						x = (get(2, 0) + get(0, 2) ) / s;
+						y = (get(1, 2) + get(2, 1) ) / s;
+						z = 0.25f * s;
+					}
+				}
+
+				float length = (float)std::sqrt(x * x + y * y + z * z + w * w);
+				x /= length;
+				y /= length;
+				z /= length;
+				w /= length;
+				
+				return Quaternion(w,x,y,z);
+			}
 			
 			static Mat44 identity()
 			{
@@ -1100,6 +1211,19 @@ namespace Circe
 				m(1,3)=-(top+bottom)/(top-bottom);
 				m(2,3)=-(farField+nearField)/(farField-nearField);
 				
+				return m;
+			}
+			
+			static Mat44 perspectiveProjection(const float& fieldOfView, const float& aspectRatio, const float& nearField, const float& farField)
+			{
+				Mat44 m;
+				float tanHalfFov=std::tan(fieldOfView*3.141593/(2.0*180));
+				float range = farField-nearField;
+				m(0,0) = 1/(aspectRatio*tanHalfFov);
+				m(1,1) = 1/(tanHalfFov);
+				m(2,2) = (nearField+farField)/range;
+				m(2,3) = -2*farField*nearField/range;
+				m(3,2) = 1;
 				return m;
 			}
 	};
@@ -1130,6 +1254,41 @@ namespace Circe
 				return *this;
 			}
 			
+			Vec<N> getPosition() const
+			{
+				return position;
+			}
+			
+			Quaternion getRotation() const
+			{
+				return rotation;
+			}
+			
+			Vec<N> getScale() const
+			{
+				return scale;
+			}
+			
+			void setPosition(const Vec<N>& newPosition)
+			{
+				position = newPosition;
+			}
+			
+			void setRotation(const Vec<2>& fwdAxis)
+			{
+				rotation = (Mat44::rotationMatrix(fwdAxis)).toQuaternion();
+			}
+			
+			void setRotation(const Vec<3>& leftAxis, const Vec<3>& fwdAxis)
+			{
+				rotation = (Mat44::rotationMatrix(leftAxis, fwdAxis)).toQuaternion();
+			}
+			
+			void setScale(const Vec<N>& newScale)
+			{
+				scale = newScale;
+			}			
+			
 			void rotate(const float& roll, const float& pitch, const float& yaw)
 			{
 				rotation.addAngle(roll, pitch, yaw);
@@ -1150,20 +1309,7 @@ namespace Circe
 				return (Mat44::positionMatrix(position)) * (Mat44::rotationMatrix(rotation)) * (Mat44::scaleMatrix(scale));
 			}
 			
-			Vec<N> getPosition() const
-			{
-				return position;
-			}
 			
-			Quaternion getRotation() const
-			{
-				return rotation;
-			}
-			
-			Vec<N> getScale() const
-			{
-				return scale;
-			}
 			
 		private:
 			Vec<N> position;

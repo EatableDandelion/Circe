@@ -9,16 +9,6 @@ namespace Circe
 	Complex::Complex(const float& real, const float& imaginary):c(real), s(imaginary)
 	{}
 	
-	/*Complex::Complex(const Vec<2>& a, const Vec<2>& b)
-	{
-		float al=Circe::length(a);
-		float bl=Circe::length(b);
-		w=dot(a, b)/(al*bl);
-		x=0.0f;
-		y=0.0f;
-		z=cross(a, b)/(al*bl);
-	}*/
-	
 	float Complex::getAngle() const
 	{
 		return atan2(s,c);

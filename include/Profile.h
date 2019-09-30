@@ -11,39 +11,25 @@
 #include <fstream>
 #include "Utils.h"
 
-#ifdef CIRCE_VERBOSE
-#	define CIRCE_INFO(text) {Circe::log.print("INFO", __FILE__, __LINE__, text);}
-#	define CIRCE_WARNING(text) {Circe::log.print("WARNING", __FILE__, __LINE__, text);}
-#	define CIRCE_ERROR(text) {Circe::log.print("ERROR", __FILE__, __LINE__, text);}
-#	define CIRCE_PRINT(text) {Circe::log.print(text);}
-#else
-#	define CIRCE_INFO(text) NULL
-#	define CIRCE_WARNING(text) NULL
-#	define CIRCE_ERROR(text) NULL
-#	define CIRCE_PRINT(text) NULL
-#endif
 
-#ifdef CIRCE_DEBUG
-#	define CIRCE_MARK() {Circe::Debug::mark(__FILE__, __LINE__);}
-#	define CIRCE_BREAK() {Circe::Debug::breakPoint(__FILE__, __LINE__);}
-#else
-#	define CIRCE_MARK() NULL
-#	define CIRCE_BREAK() NULL
-#endif
+#define CIRCE_INFO(text) {Circe::log.print("INFO", __FILE__, __LINE__, text);}
+#define CIRCE_WARNING(text) {Circe::log.print("WARNING", __FILE__, __LINE__, text);}
+#define CIRCE_ERROR(text) {Circe::log.print("ERROR", __FILE__, __LINE__, text);}
+#define CIRCE_PRINT(text) {Circe::log.print(text);}
 
-#ifdef CIRCE_PROFILING
-#	define CIRCE_CONCAT(x, y) CIRCE_CONCAT2(x, y)
-#	define CIRCE_CONCAT2(x, y) x ## y
-#	define CIRCE_PROFILEBLOCK Circe::ProfileMarker CIRCE_CONCAT(marker_,__LINE)(__FILE__, __PRETTY_FUNCTION__, __LINE__)
-#	define CIRCE_INITPROFILER {std::shared_ptr<Profiler> manager = std::make_shared<Profiler>(); ProfilerService::provide(manager);}
-#else
-#	define CIRCE_PROFILEBLOCK NULL
-#	define CIRCE_INITPROFILER NULL
-#endif
+
+#define CIRCE_MARK {Circe::Debug::mark(__FILE__, __LINE__);}
+#define CIRCE_BREAK {Circe::Debug::breakPoint(__FILE__, __LINE__);}
+
+
+#define CIRCE_CONCAT(x, y) CIRCE_CONCAT2(x, y)
+#define CIRCE_CONCAT2(x, y) x ## y
+#define CIRCE_PROFILEBLOCK Circe::ProfileMarker CIRCE_CONCAT(marker_,__LINE)(__FILE__, __PRETTY_FUNCTION__, __LINE__)
+#define CIRCE_INITPROFILER {std::shared_ptr<Profiler> manager = std::make_shared<Profiler>(); ProfilerService::provide(manager);}
 
 /**
 How to use profiler:
-#define CIRCE_PROFILING
+
 {
 	CIRCE_INITPROFILER;
 	CIRCE_PROFILEBLOCK;

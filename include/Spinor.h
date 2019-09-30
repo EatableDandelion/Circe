@@ -34,6 +34,7 @@ namespace Circe
 			Quaternion();
 			Quaternion(const float& w, const float& x, const float& y, const float& z);
 			
+			
 			Quaternion operator=(const Quaternion& q);
 			Quaternion operator*(const Quaternion& q)const;					
 			float length() const;			

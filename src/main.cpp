@@ -1,6 +1,4 @@
-#define CIRCE_PROFILING
-#define CIRCE_DEBUG
-#define CIRCE_VERBOSE
+
 
 #include "Circe.h"
 #include <memory>
@@ -17,7 +15,7 @@ int main()
 
 	using namespace Circe;
 	
-
+/*
 	CIRCE_INITPROFILER;
 	{
 		CIRCE_PROFILEBLOCK;
@@ -49,9 +47,12 @@ int main()
 				}
 			}
 		}
-	}
+	}*/
 	
-
-
+	Mat44 m = Mat44::rotationMatrix(Vec<3>(0.8,0.5,0), Vec<3>(-0.6,0.5,0));
+	std::cout << m << std::endl;
+	std::cout << Mat44::rotationMatrix(m.toQuaternion()) << std::endl;
+	
+	
 	return 0;
 }
