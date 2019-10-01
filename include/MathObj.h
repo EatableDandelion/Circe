@@ -20,6 +20,11 @@ namespace Circe
 	template<std::size_t N> struct Direction;
 	template<std::size_t N> struct Position;
 	
+	enum REF_FRAME
+	{
+		LOCAL,
+		GLOBAL
+	};
 	
 	//A few useful functions
 	extern float min(const float& a, const float& b);
@@ -517,6 +522,16 @@ namespace Circe
 		public:
 			Vec():x(0.0f), y(0.0f), z(0.0f)
 			{}
+			
+			/*Vec(const std::initializer_list<float>& values)
+			{
+				int index = 0;
+				for(float value : values)
+				{
+					
+					index++;
+				}
+			}*/
 		
 			Vec(const float& x, const float& y, const float& z):x(x), y(y), z(z)
 			{}
@@ -1294,9 +1309,11 @@ namespace Circe
 				rotation.addAngle(roll, pitch, yaw);
 			}
 			
-			void translate(const Vec<N>& v)
+			void translate(const Direction<N>& v)
 			{
-				position+=v;
+				Direction<N> v2 = v;
+				v2.toGlobalFrame(*this);
+				position += v2.getValue();
 			}
 			
 			void resize(const float& scaleRatio)
@@ -1317,51 +1334,124 @@ namespace Circe
 			Vec<N> scale;			
 	};
 	
-	//Wrapper for change of reference frame of a positional vector
 	template<std::size_t N>
 	struct Position
 	{
 		public:
-			Position(Vec<N>& vectorToTransform):v(&vectorToTransform)
+			template<typename... Args>
+			Position(const REF_FRAME& frame, Args... args):frame(frame), vector(std::make_shared<Vec<N>>(std::forward<Args>(args)...))
 			{}
 			
 			void toGlobalFrame(const Transform<N>& transform)
 			{
-				(*v).rotateInv(transform.getRotation());
-				(*v)-=transform.getPosition();
+				if(frame == REF_FRAME::LOCAL)
+				{
+					vector->rotateInv(transform.getRotation());
+					(*vector)-=transform.getPosition();
+				}
 			}
 			
 			void toLocalFrame(const Transform<N>& transform)
 			{
-				(*v).rotate(transform.getRotation());
-				(*v)+=transform.getPosition();
+				if(frame == REF_FRAME::LOCAL)
+				{
+					vector->rotate(transform.getRotation());
+					(*vector)+=transform.getPosition();
+				}
+			}
+			
+			Direction<N> operator-(const Position<N>& p2)
+			{
+				return Direction<N>(frame, vector-p2.vector);
+			}
+			
+			Position<N> operator+(const Direction<N>& d)
+			{
+				return Position<N>(frame, vector+d.getValue());
+			}
+			
+			Position<N> operator-(const Direction<N>& d)
+			{
+				return Position<N>(frame, vector-d.getValue());
+			}
+			
+			REF_FRAME getFrame() const
+			{
+				return frame;
+			}
+			
+			Vec<N> getValue() const
+			{
+				return *vector;
 			}
 			
 		private:
-			std::shared_ptr<Vec<N>> v;
+			std::shared_ptr<Vec<N>> vector;
+			REF_FRAME frame;
 	};
 	
-	
-	//Wrapper for change of reference frame of a directional vector
 	template<std::size_t N>
 	struct Direction
 	{
 		public:
-			Direction(Vec<N>& vectorToTransform):v(&vectorToTransform)
+			template<typename... Args>
+			Direction(const REF_FRAME& frame, Args... args):frame(frame), vector(std::make_shared<Vec<N>>(std::forward<Args>(args)...))
+			{}
+			
+			Direction(const REF_FRAME& frame, const Vec<N> vector):frame(frame), vector(vector)
 			{}
 			
 			void toGlobalFrame(const Transform<N>& transform)
 			{
-				(*v).rotateInv(transform.getRotation());
+				if(frame == REF_FRAME::LOCAL)
+				{
+					vector->rotateInv(transform.getRotation());
+					frame = REF_FRAME::GLOBAL;
+				}
 			}
 			
 			void toLocalFrame(const Transform<N>& transform)
 			{
-				(*v).rotate(transform.getRotation());
+				if(frame == REF_FRAME::GLOBAL)
+				{
+					vector->rotate(transform.getRotation());
+					frame = REF_FRAME::LOCAL;
+				}
+			}
+			
+			Direction<N> operator+(const Direction<N>& d2)
+			{
+				return Direction<N>(frame, vector+d2.vector);
+			}
+			
+			Direction<N> operator-(const Direction<N>& d2)
+			{
+				return Direction<N>(frame, vector-d2.vector);
+			}
+			
+			Position<N> operator+(const Position<N>& p2)
+			{
+				return Position<N>(frame, vector+p2.getValue());
+			}
+			
+			Position<N> operator-(const Position<N>& p2)
+			{
+				return Position<N>(frame, vector-p2.getValue());
+			}
+			
+			REF_FRAME getFrame() const
+			{
+				return frame;
+			}
+			
+			Vec<N> getValue() const
+			{
+				return *vector;
 			}
 			
 		private:
-			std::shared_ptr<Vec<N>> v;
+			std::shared_ptr<Vec<N>> vector;
+			REF_FRAME frame;
 	};
 	
 	
