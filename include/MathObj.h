@@ -494,22 +494,24 @@ namespace Circe
 				y=0.0f;
 			}
 			
-			void rotate(const Complex& q)
+			Vec<2> rotate(const Complex& q)
 			{
 				float c=q.getReal();
 				float s=q.getImaginary();
 				float xtemp=c*x-s*y;
 				y=s*x+c*y;
 				x=xtemp;
+				return *this;
 			}
 			
-			void rotateInv(const Complex& q)
+			Vec<2> rotateInv(const Complex& q)
 			{
 				float c=q.getReal();
 				float s=q.getImaginary();
 				float xtemp=c*x+s*y;
 				y=-s*x+c*y;
 				x=xtemp;
+				return *this;
 			}
 			
 		private:
@@ -643,7 +645,7 @@ namespace Circe
 			}
 	
 			//Set one element of this vector
-			float &operator()(const unsigned int& index)
+			float& operator()(const unsigned int& index)
 			{
 				assert(index<3);
 				if(index==0)return x;
@@ -659,7 +661,7 @@ namespace Circe
 				z=0.0f;
 			}
 			
-			void rotate(const Quaternion& q)
+			Vec<3> rotate(const Quaternion& q)
 			{
 				Quaternion v(0.0f, x, y, z);
 				Quaternion p=q;
@@ -669,11 +671,12 @@ namespace Circe
 				x=result.getX();
 				y=result.getY();
 				z=result.getZ();
+				return *this;
 			}
 			
-			void rotateInv(const Quaternion& p)
+			Vec<3> rotateInv(const Quaternion& p)
 			{
-				rotate(p.getConjugate());
+				return rotate(p.getConjugate());
 			}
 			
 		private:
@@ -1252,11 +1255,13 @@ namespace Circe
 	struct Transform : public ITransform
 	{
 		public:
-			Transform():position(), rotation(), scale(1.0f)
-			{}
+			Transform(const Position<N>& position0, const Quaternion& rotation, const Direction<N>& scale):position(position0), rotation(rotation), scale(scale)
+			{
+				setFramePosition(position0);
+			}
 			
-			Transform(const Vec<N>& position, const Quaternion& rotation, const Vec<N>& scale):position(position), rotation(rotation), scale(scale)
-			{}
+			Transform():Transform(Position<N>(REF_FRAME::LOCAL, Vec<N>(0.0f)), Quaternion(), Direction<N>(REF_FRAME::LOCAL, Vec<N>(1.0f)))
+			{}		
 			
 			Transform(const Transform<N>& transform):position(transform.position), rotation(transform.rotation), scale(transform.scale)
 			{}
@@ -1269,37 +1274,52 @@ namespace Circe
 				return *this;
 			}
 			
-			Vec<N> getPosition() const
+			Position<N> getFramePosition(const REF_FRAME& reference = REF_FRAME::LOCAL) const
 			{
+				if(reference == REF_FRAME::GLOBAL)
+				{
+					if(std::shared_ptr<Transform<N>>  parent = m_parent.lock())
+					{
+						return parent->toGlobalFrame(position);
+					}
+				}
 				return position;
 			}
 			
-			Quaternion getRotation() const
+			Quaternion getFrameRotation() const
 			{
 				return rotation;
 			}
 			
-			Vec<N> getScale() const
+			Direction<N> getFrameScale() const
 			{
 				return scale;
 			}
 			
-			void setPosition(const Vec<N>& newPosition)
-			{
-				position = newPosition;
+			void setFramePosition(const Position<N>& newPosition)
+			{				
+				if(newPosition.getFrame() == REF_FRAME::GLOBAL)
+				{
+					if(std::shared_ptr<Transform<N>>  parent = m_parent.lock())
+					{
+						position = parent->toLocalFrame(newPosition);
+						return;
+					}
+				}
+				position = newPosition;			
 			}
 			
-			void setRotation(const Vec<2>& fwdAxis)
+			void setFrameRotation(const Vec<2>& fwdAxis)
 			{
 				rotation = (Mat44::rotationMatrix(fwdAxis)).toQuaternion();
 			}
 			
-			void setRotation(const Vec<3>& leftAxis, const Vec<3>& fwdAxis)
+			void setFrameRotation(const Vec<3>& leftAxis, const Vec<3>& fwdAxis)
 			{
 				rotation = (Mat44::rotationMatrix(leftAxis, fwdAxis)).toQuaternion();
 			}
 			
-			void setScale(const Vec<N>& newScale)
+			void setFrameScale(const Direction<N>& newScale)
 			{
 				scale = newScale;
 			}			
@@ -1312,8 +1332,11 @@ namespace Circe
 			void translate(const Direction<N>& v)
 			{
 				Direction<N> v2 = v;
-				v2.toGlobalFrame(*this);
-				position += v2.getValue();
+				if(v.getFrame() == REF_FRAME::GLOBAL)
+				{
+					v2 = toLocalFrame(v);
+				}
+				position += v2;
 			}
 			
 			void resize(const float& scaleRatio)
@@ -1323,15 +1346,113 @@ namespace Circe
 			
 			Mat<4> getTransformMatrix() const
 			{
-				return (Mat44::positionMatrix(position)) * (Mat44::rotationMatrix(rotation)) * (Mat44::scaleMatrix(scale));
+				Mat<4> res = (Mat44::positionMatrix(position.getValue())) * (Mat44::rotationMatrix(rotation)) * (Mat44::scaleMatrix(scale.getValue()));
+				if(std::shared_ptr<Transform<N>> parent = m_parent.lock())
+				{
+					return parent->getTransformMatrix()*res;
+				}
+				else
+				{
+					return res;
+				}
 			}
 			
+			void attachTo(const std::shared_ptr<Transform<N>>& parent)
+			{
+				position = parent->toLocalFrame(position);
+				m_parent = parent;
+			}
 			
+			void detachFrom(const std::shared_ptr<Transform<N>>& parent)
+			{
+				position = parent->toGlobalFrame(position);
+				m_parent.reset();
+			}
 			
+			Direction<N> toLocalFrame(const Direction<N>& direction)
+			{
+				if(std::shared_ptr<Transform<N>>  parent = m_parent.lock())
+				{
+					return inThisFrame(parent->toLocalFrame(direction));
+				}
+				else
+				{
+					return inThisFrame(direction);
+				}
+			}
+			
+			Direction<N> toGlobalFrame(const Direction<N> direction)
+			{
+				if(std::shared_ptr<Transform<N>>  parent = m_parent.lock())
+				{
+					return parent->toGlobalFrame(inParentFrame(direction));
+				}
+				else
+				{
+					return inParentFrame(direction);
+				}
+			}
+			
+			Position<N> toLocalFrame(const Position<N>& pos)
+			{
+				if(std::shared_ptr<Transform<N>>  parent = m_parent.lock())
+				{
+					return inThisFrame(parent->toLocalFrame(pos));
+				}
+				else
+				{
+					return inThisFrame(pos);
+				}
+			}
+			
+			Position<N> toGlobalFrame(const Position<N> pos)
+			{
+				if(std::shared_ptr<Transform<N>>  parent = m_parent.lock())
+				{
+					return parent->toGlobalFrame(inParentFrame(pos));
+				}
+				else
+				{
+					return inParentFrame(pos);
+				}
+			}
+			
+			std::weak_ptr<Transform<N>> getParent()
+			{
+				return m_parent;
+			}
+
 		private:
-			Vec<N> position;
+			/** Attitude stored in LOCAL reference frame */
+			Position<N> position;
 			Quaternion rotation;
-			Vec<N> scale;			
+			Direction<N> scale;
+			std::weak_ptr<Transform<N>> m_parent;
+			
+			Direction<N> inThisFrame(const Direction<N>& direction)
+			{
+				Direction<N> newDirection(REF_FRAME::LOCAL, direction.getValue().rotate(rotation));
+				return newDirection;
+			}
+			
+			Direction<N> inParentFrame(const Direction<N>& direction)
+			{
+				Direction<N> newDirection = Direction<N>(REF_FRAME::GLOBAL, direction.getValue().rotateInv(rotation));
+				return newDirection;
+			}
+			
+			Position<N> inThisFrame(const Position<N>& pos)
+			{
+				Position<N> newPosition(REF_FRAME::LOCAL, (pos.getValue()-position.getValue()).rotateInv(rotation));
+				return newPosition;
+			}
+			
+			Position<N> inParentFrame(const Position<N>& pos)
+			{
+				
+				Position<N> newPosition = Position<N>(REF_FRAME::GLOBAL, pos.getValue().rotate(rotation) + position.getValue());
+				return newPosition;
+			}
 	};
 	
 	template<std::size_t N>
@@ -1342,23 +1463,11 @@ namespace Circe
 			Position(const REF_FRAME& frame, Args... args):frame(frame), vector(std::make_shared<Vec<N>>(std::forward<Args>(args)...))
 			{}
 			
-			void toGlobalFrame(const Transform<N>& transform)
-			{
-				if(frame == REF_FRAME::LOCAL)
-				{
-					vector->rotateInv(transform.getRotation());
-					(*vector)-=transform.getPosition();
-				}
-			}
+			Position(const REF_FRAME& frame, const Vec<N> vector):frame(frame), vector(std::make_shared<Vec<N>>(vector))
+			{}
 			
-			void toLocalFrame(const Transform<N>& transform)
-			{
-				if(frame == REF_FRAME::LOCAL)
-				{
-					vector->rotate(transform.getRotation());
-					(*vector)+=transform.getPosition();
-				}
-			}
+			Position(const Position<N>& other):frame(other.frame), vector(std::make_shared<Vec<N>>(*(other.vector)))
+			{}
 			
 			Direction<N> operator-(const Position<N>& p2)
 			{
@@ -1370,9 +1479,24 @@ namespace Circe
 				return Position<N>(frame, vector+d.getValue());
 			}
 			
+			void operator+=(const Direction<N>& d)
+			{
+				*vector+=d.getValue();
+			}
+			
 			Position<N> operator-(const Direction<N>& d)
 			{
 				return Position<N>(frame, vector-d.getValue());
+			}
+			
+			void operator-=(const Direction<N>& d)
+			{
+				*vector-=d.getValue();
+			}
+			
+			float& operator()(const unsigned int& index)
+			{
+				return (*vector)(index);
 			}
 			
 			REF_FRAME getFrame() const
@@ -1398,26 +1522,11 @@ namespace Circe
 			Direction(const REF_FRAME& frame, Args... args):frame(frame), vector(std::make_shared<Vec<N>>(std::forward<Args>(args)...))
 			{}
 			
-			Direction(const REF_FRAME& frame, const Vec<N> vector):frame(frame), vector(vector)
+			Direction(const REF_FRAME& frame, const Vec<N> vector):frame(frame), vector(std::make_shared<Vec<N>>(vector))
 			{}
 			
-			void toGlobalFrame(const Transform<N>& transform)
-			{
-				if(frame == REF_FRAME::LOCAL)
-				{
-					vector->rotateInv(transform.getRotation());
-					frame = REF_FRAME::GLOBAL;
-				}
-			}
-			
-			void toLocalFrame(const Transform<N>& transform)
-			{
-				if(frame == REF_FRAME::GLOBAL)
-				{
-					vector->rotate(transform.getRotation());
-					frame = REF_FRAME::LOCAL;
-				}
-			}
+			Direction(const Direction<N>& other):frame(other.frame), vector(std::make_shared<Vec<N>>(*(other.vector)))
+			{}
 			
 			Direction<N> operator+(const Direction<N>& d2)
 			{
@@ -1437,6 +1546,11 @@ namespace Circe
 			Position<N> operator-(const Position<N>& p2)
 			{
 				return Position<N>(frame, vector-p2.getValue());
+			}
+			
+			float operator()(const unsigned int& index)
+			{
+				return vector->get(index);
 			}
 			
 			REF_FRAME getFrame() const
@@ -1463,6 +1577,28 @@ namespace Circe
 			strm << ", " << v(i);
 		}
 		return strm << "]";
+	}
+	
+	template<std::size_t N>
+	std::ostream& operator<<(std::ostream &strm, const Position<N> &v)
+	{
+		std::string frame = "(Global position)";
+		if(v.getFrame() == REF_FRAME::LOCAL)
+		{
+			frame = "(Local position)";
+		}
+		return strm << v.getValue() << frame;
+	}
+	
+	template<std::size_t N>
+	std::ostream& operator<<(std::ostream &strm, const Direction<N> &v)
+	{
+		std::string frame = "(Global direction)";
+		if(v.getFrame() == REF_FRAME::LOCAL)
+		{
+			frame = "(Local direction)";
+		}
+		return strm << v.getValue() << frame;
 	}
 	
 	template<std::size_t N, std::size_t M>

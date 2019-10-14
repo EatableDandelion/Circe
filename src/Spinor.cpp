@@ -63,14 +63,28 @@ namespace Circe
 		c=ctemp;
 	}
 	
-	Quaternion::Quaternion():w(0.0f), x(0.0f), y(0.0f), z(1.0f)
+	Quaternion::Quaternion():w(1.0f), x(0.0f), y(0.0f), z(0.0f)
 	{}
-	
-	/*Quaternion::Quaternion(float angle, Vec<3> axis):Spinor<3>(cos(angle/2.0f), axis(0)*sin(angle/2.0f), axis(1)*sin(angle/2.0f), axis(2)*sin(angle/2.0f))
-	{}*/
 	
 	Quaternion::Quaternion(const float& w, const float& x, const float& y, const float& z):w(w), x(x), y(y), z(z)
 	{}
+	
+	Quaternion::Quaternion(const float& roll, const float& pitch, const float& yaw)
+	{
+		float cy = cos(yaw*0.5f);
+		float sy = sin(yaw*0.5f);
+		float cp = cos(pitch*0.5f);
+		float sp = sin(pitch*0.5f);
+		float cr = cos(roll*0.5f);
+		float sr = sin(roll*0.5f);
+		
+		w = cy*cp*cr+sy*sp*sr;
+		x = cy*cp*sr-sy*sp*cr;
+		y = sy*cp*sr+cy*sp*cr;
+		z = sy*cp*cr-cy*sp*sr;
+		
+		//Source: Wikipedia, conversion between quaternion and Euler angles
+	}
 	
 	Quaternion Quaternion::operator=(const Quaternion& q)
 	{
@@ -84,20 +98,34 @@ namespace Circe
 	Quaternion Quaternion::operator*(const Quaternion& q) const
 	{
 		return Quaternion(
-		w*q.w - x*q.x - y*q.y - z*q.z, //w
-		w*q.x + x*q.w + y*q.z - z*q.y, //x
-		w*q.y - x*q.z + y*q.w + z*q.x, //y
-		w*q.z + x*q.y - y*q.x + z*q.w //z
+			w*q.w - x*q.x - y*q.y - z*q.z, //w
+			w*q.x + x*q.w + y*q.z - z*q.y, //x
+			w*q.y - x*q.z + y*q.w + z*q.x, //y
+			w*q.z + x*q.y - y*q.x + z*q.w //z
 		);
+	}
+	
+	void Quaternion::operator*=(const Quaternion& q)
+	{
+		float w0 = w*q.w - x*q.x - y*q.y - z*q.z;
+		float x0 = w*q.x + x*q.w + y*q.z - z*q.y;
+		float y0 = w*q.y - x*q.z + y*q.w + z*q.x;
+		float z0 = w*q.z + x*q.y - y*q.x + z*q.w;
+		w = w0;
+		x = x0;
+		y = y0;
+		z = z0;
 	}
 	
 	void Quaternion::addAngle(const float& roll, const float& pitch, const float& yaw)
 	{
-		Quaternion q = (*this)*Quaternion(0.0f, roll*0.5f, pitch*0.5f, yaw*0.5f);
+		/*Quaternion q = (*this)*Quaternion(0.0f, roll*0.5f, pitch*0.5f, yaw*0.5f);
 		w+=q.w;
 		x+=q.x;
 		y+=q.y;
 		z+=q.z;
+		normalize();*/
+		(*this)*=Quaternion(roll, pitch, yaw);
 		normalize();
 	}
 	

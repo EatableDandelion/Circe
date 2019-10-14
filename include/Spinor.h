@@ -33,10 +33,11 @@ namespace Circe
 		public:
 			Quaternion();
 			Quaternion(const float& w, const float& x, const float& y, const float& z);
-			
+			Quaternion(const float& roll, const float& pitch, const float& yaw);
 			
 			Quaternion operator=(const Quaternion& q);
-			Quaternion operator*(const Quaternion& q)const;					
+			Quaternion operator*(const Quaternion& q)const;
+			void operator*=(const Quaternion& q);
 			float length() const;			
 			void normalize();			
 			void conjugate();
