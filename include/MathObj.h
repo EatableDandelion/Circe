@@ -1456,7 +1456,7 @@ namespace Circe
 	};
 	
 	template<std::size_t N>
-	struct Position
+	struct Position : public Vec<N>
 	{
 		public:
 			template<typename... Args>
@@ -1477,6 +1477,11 @@ namespace Circe
 			Position<N> operator+(const Direction<N>& d)
 			{
 				return Position<N>(frame, vector+d.getValue());
+			}
+			
+			Position<N> operator*(const float& f)
+			{
+				return Position<N>(frame, (*vector)*f);
 			}
 			
 			void operator+=(const Direction<N>& d)
@@ -1515,7 +1520,7 @@ namespace Circe
 	};
 	
 	template<std::size_t N>
-	struct Direction
+	struct Direction : public Vec<N>
 	{
 		public:
 			template<typename... Args>
@@ -1536,6 +1541,11 @@ namespace Circe
 			Direction<N> operator-(const Direction<N>& d2)
 			{
 				return Direction<N>(frame, vector-d2.vector);
+			}
+			
+			void operator*=(const float& f)
+			{
+				(*vector) *= f;
 			}
 			
 			Position<N> operator+(const Position<N>& p2)
