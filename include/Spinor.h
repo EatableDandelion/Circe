@@ -41,7 +41,7 @@ namespace Circe
 			float length() const;			
 			void normalize();			
 			void conjugate();
-			void addAngle(const float& roll, const float& pitch, const float& yaw); //add the angles in the three dimensions, equivalent to adding dtheta, angles in the local reference frame
+			void addAngle(const float& roll, const float& pitch, const float& yaw, const bool& localFrame = true); //add the angles in the three dimensions, equivalent to adding dtheta, angles in the local reference frame
 			Quaternion getConjugate() const;		
 			float getW() const;			
 			float getX() const;			

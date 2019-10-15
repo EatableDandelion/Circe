@@ -48,6 +48,25 @@ int main()
 			}
 		}
 	}*/
+	Quaternion q;
+	Mat44 m;
+	for(int i = 0; i<100; i++)
+	{
+		q.addAngle(0.01f, 0.1f, 0.1f, false);
+		
+		
+	}
+	float prev = 0;
+	float theta = 0;
+	for(int i = 0; i<100; i++)
+	{
+		q.addAngle(0.0f, 0.0f, 0.1f, true);
+		m = Mat44::rotationMatrix(q);
+		theta = atan2(m(1,0), m(0,0));
+		std::cout << theta << std::endl;
+		prev = theta;
+	}
+	//
 	
 	return 0;
 }

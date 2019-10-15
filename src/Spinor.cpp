@@ -117,15 +117,25 @@ namespace Circe
 		z = z0;
 	}
 	
-	void Quaternion::addAngle(const float& roll, const float& pitch, const float& yaw)
+	void Quaternion::addAngle(const float& roll, const float& pitch, const float& yaw, const bool& localFrame)
 	{
-		/*Quaternion q = (*this)*Quaternion(0.0f, roll*0.5f, pitch*0.5f, yaw*0.5f);
-		w+=q.w;
-		x+=q.x;
-		y+=q.y;
-		z+=q.z;
-		normalize();*/
-		(*this)*=Quaternion(roll, pitch, yaw);
+		if(localFrame)
+		{
+			Quaternion q = (*this)*Quaternion(0.0f, -roll*0.5f, -pitch*0.5f, -yaw*0.5f);
+			w+=q.w;
+			x+=q.x;
+			y+=q.y;
+			z+=q.z;
+		}
+		else
+		{
+			Quaternion q = Quaternion(0.0f, roll*0.5f, pitch*0.5f, yaw*0.5f)*(*this);
+			w+=q.w;
+			x+=q.x;
+			y+=q.y;
+			z+=q.z;
+		}
+		
 		normalize();
 	}
 	

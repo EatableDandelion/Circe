@@ -1324,9 +1324,16 @@ namespace Circe
 				scale = newScale;
 			}			
 			
-			void rotate(const float& roll, const float& pitch, const float& yaw)
+			void rotate(const Direction<N>& eulerAngles)
 			{
-				rotation.addAngle(roll, pitch, yaw);
+				if(eulerAngles.getFrame() == REF_FRAME::LOCAL)
+				{
+					rotation.addAngle(eulerAngles(0), eulerAngles(1), eulerAngles(2), true);
+				}
+				else
+				{
+					rotation.addAngle(eulerAngles(0), eulerAngles(1), eulerAngles(2), false);
+				}
 			}
 			
 			void translate(const Direction<N>& v)
