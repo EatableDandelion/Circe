@@ -837,6 +837,132 @@ namespace Circe
 	using Vec3=Vec<3>;
 	using Vec4=Vec<4>;
 	
+	
+	template<std::size_t N>
+	struct Position : public Vec<N>
+	{
+		public:
+			template<typename... Args>
+			Position(const REF_FRAME& frame, Args... args):frame(frame), vector(std::make_shared<Vec<N>>(std::forward<Args>(args)...))
+			{}
+			
+			Position(const REF_FRAME& frame, const Vec<N> vector):frame(frame), vector(std::make_shared<Vec<N>>(vector))
+			{}
+			
+			Position(const Position<N>& other):frame(other.frame), vector(std::make_shared<Vec<N>>(*(other.vector)))
+			{}
+			
+			Direction<N> operator-(const Position<N>& p2)
+			{
+				return Direction<N>(frame, vector-p2.vector);
+			}
+			
+			Position<N> operator+(const Direction<N>& d)
+			{
+				return Position<N>(frame, vector+d.getValue());
+			}
+			
+			Position<N> operator*(const float& f)
+			{
+				return Position<N>(frame, (*vector)*f);
+			}
+			
+			void operator+=(const Direction<N>& d)
+			{
+				(*vector)+=d.getValue();
+			}
+			
+			Position<N> operator-(const Direction<N>& d)
+			{
+				return Position<N>(frame, vector-d.getValue());
+			}
+			
+			void operator-=(const Direction<N>& d)
+			{
+				(*vector)-=d.getValue();
+			}
+			
+			float operator()(const unsigned int& index) const
+			{
+				float res = (*vector)(index);
+				return res;
+			}
+			
+			REF_FRAME getFrame() const
+			{
+				return frame;
+			}
+			
+			Vec<N> getValue() const
+			{
+				return *vector;
+			}
+			
+		private:
+			std::shared_ptr<Vec<N>> vector;
+			REF_FRAME frame;
+	};
+	
+	template<std::size_t N>
+	struct Direction : public Vec<N>
+	{
+		public:
+			template<typename... Args>
+			Direction(const REF_FRAME& frame, Args... args):frame(frame), vector(std::make_shared<Vec<N>>(std::forward<Args>(args)...))
+			{}
+			
+			Direction(const REF_FRAME& frame, const Vec<N> vector):frame(frame), vector(std::make_shared<Vec<N>>(vector))
+			{}
+			
+			Direction(const Direction<N>& other):frame(other.frame), vector(std::make_shared<Vec<N>>(*(other.vector)))
+			{}
+			
+			Direction<N> operator+(const Direction<N>& d2)
+			{
+				return Direction<N>(frame, vector+d2.vector);
+			}
+			
+			Direction<N> operator-(const Direction<N>& d2)
+			{
+				return Direction<N>(frame, vector-d2.vector);
+			}
+			
+			void operator*=(const float& f)
+			{
+				(*vector) *= f;
+			}
+			
+			Position<N> operator+(const Position<N>& p2)
+			{
+				return Position<N>(frame, vector+p2.getValue());
+			}
+			
+			Position<N> operator-(const Position<N>& p2)
+			{
+				return Position<N>(frame, vector-p2.getValue());
+			}
+			
+			float operator()(const unsigned int& index) const
+			{
+				float res = (*vector)(index);
+				return res;
+			}
+			
+			REF_FRAME getFrame() const
+			{
+				return frame;
+			}
+			
+			Vec<N> getValue() const
+			{
+				return *vector;
+			}
+			
+		private:
+			std::shared_ptr<Vec<N>> vector;
+			REF_FRAME frame;
+	};
+	
 	template<std::size_t N, std::size_t M=N>
 	struct Mat
 	{	
@@ -1038,12 +1164,12 @@ namespace Circe
 	struct Mat44:public Mat<4>
 	{
 		public:
-			static Mat44 positionMatrix(const Vec<2>& v)
+			static Mat44 positionMatrix(const Position<2>& v)
 			{
 				return Mat44::positionMatrix(v(0), v(1), 0.0f);
 			}
 			
-			static Mat44 positionMatrix(const Vec<3>& v)
+			static Mat44 positionMatrix(const Position<3>& v)
 			{
 				return Mat44::positionMatrix(v(0), v(1), v(2));
 			}
@@ -1276,7 +1402,7 @@ namespace Circe
 			
 			Position<N> getFramePosition(const REF_FRAME& reference = REF_FRAME::LOCAL) const
 			{
-				if(reference == REF_FRAME::GLOBAL)
+				if(reference == REF_FRAME::LOCAL)
 				{
 					if(std::shared_ptr<Transform<N>>  parent = m_parent.lock())
 					{
@@ -1298,7 +1424,7 @@ namespace Circe
 			
 			void setFramePosition(const Position<N>& newPosition)
 			{				
-				if(newPosition.getFrame() == REF_FRAME::GLOBAL)
+				if(newPosition.getFrame() == REF_FRAME::LOCAL)
 				{
 					if(std::shared_ptr<Transform<N>>  parent = m_parent.lock())
 					{
@@ -1339,7 +1465,7 @@ namespace Circe
 			void translate(const Direction<N>& v)
 			{
 				Direction<N> v2 = v;
-				if(v.getFrame() == REF_FRAME::GLOBAL)
+				if(v.getFrame() == REF_FRAME::LOCAL)
 				{
 					v2 = toLocalFrame(v);
 				}
@@ -1353,7 +1479,7 @@ namespace Circe
 			
 			Mat<4> getTransformMatrix() const
 			{
-				Mat<4> res = (Mat44::positionMatrix(position.getValue())) * (Mat44::rotationMatrix(rotation)) * (Mat44::scaleMatrix(scale.getValue()));
+				Mat<4> res = (Mat44::positionMatrix(position)) * (Mat44::rotationMatrix(rotation)) * (Mat44::scaleMatrix(scale.getValue()));
 				if(std::shared_ptr<Transform<N>> parent = m_parent.lock())
 				{
 					return parent->getTransformMatrix()*res;
@@ -1438,152 +1564,31 @@ namespace Circe
 			
 			Direction<N> inThisFrame(const Direction<N>& direction)
 			{
-				Direction<N> newDirection(REF_FRAME::LOCAL, direction.getValue().rotate(rotation));
+				Direction<N> newDirection(REF_FRAME::LOCAL, direction.getValue().rotateInv(rotation));
 				return newDirection;
 			}
 			
 			Direction<N> inParentFrame(const Direction<N>& direction)
 			{
-				Direction<N> newDirection = Direction<N>(REF_FRAME::GLOBAL, direction.getValue().rotateInv(rotation));
+				Direction<N> newDirection = Direction<N>(REF_FRAME::GLOBAL, direction.getValue().rotate(rotation));
 				return newDirection;
 			}
 			
 			Position<N> inThisFrame(const Position<N>& pos)
 			{
-				Position<N> newPosition(REF_FRAME::LOCAL, (pos.getValue()-position.getValue()).rotateInv(rotation));
+				Position<N> newPosition(REF_FRAME::LOCAL, (pos.getValue()-position.getValue()).rotate(rotation));
 				return newPosition;
 			}
 			
 			Position<N> inParentFrame(const Position<N>& pos)
 			{
 				
-				Position<N> newPosition = Position<N>(REF_FRAME::GLOBAL, pos.getValue().rotate(rotation) + position.getValue());
+				Position<N> newPosition = Position<N>(REF_FRAME::GLOBAL, pos.getValue().rotateInv(rotation) + position.getValue());
 				return newPosition;
 			}
 	};
 	
-	template<std::size_t N>
-	struct Position : public Vec<N>
-	{
-		public:
-			template<typename... Args>
-			Position(const REF_FRAME& frame, Args... args):frame(frame), vector(std::make_shared<Vec<N>>(std::forward<Args>(args)...))
-			{}
-			
-			Position(const REF_FRAME& frame, const Vec<N> vector):frame(frame), vector(std::make_shared<Vec<N>>(vector))
-			{}
-			
-			Position(const Position<N>& other):frame(other.frame), vector(std::make_shared<Vec<N>>(*(other.vector)))
-			{}
-			
-			Direction<N> operator-(const Position<N>& p2)
-			{
-				return Direction<N>(frame, vector-p2.vector);
-			}
-			
-			Position<N> operator+(const Direction<N>& d)
-			{
-				return Position<N>(frame, vector+d.getValue());
-			}
-			
-			Position<N> operator*(const float& f)
-			{
-				return Position<N>(frame, (*vector)*f);
-			}
-			
-			void operator+=(const Direction<N>& d)
-			{
-				*vector+=d.getValue();
-			}
-			
-			Position<N> operator-(const Direction<N>& d)
-			{
-				return Position<N>(frame, vector-d.getValue());
-			}
-			
-			void operator-=(const Direction<N>& d)
-			{
-				*vector-=d.getValue();
-			}
-			
-			float& operator()(const unsigned int& index)
-			{
-				return (*vector)(index);
-			}
-			
-			REF_FRAME getFrame() const
-			{
-				return frame;
-			}
-			
-			Vec<N> getValue() const
-			{
-				return *vector;
-			}
-			
-		private:
-			std::shared_ptr<Vec<N>> vector;
-			REF_FRAME frame;
-	};
 	
-	template<std::size_t N>
-	struct Direction : public Vec<N>
-	{
-		public:
-			template<typename... Args>
-			Direction(const REF_FRAME& frame, Args... args):frame(frame), vector(std::make_shared<Vec<N>>(std::forward<Args>(args)...))
-			{}
-			
-			Direction(const REF_FRAME& frame, const Vec<N> vector):frame(frame), vector(std::make_shared<Vec<N>>(vector))
-			{}
-			
-			Direction(const Direction<N>& other):frame(other.frame), vector(std::make_shared<Vec<N>>(*(other.vector)))
-			{}
-			
-			Direction<N> operator+(const Direction<N>& d2)
-			{
-				return Direction<N>(frame, vector+d2.vector);
-			}
-			
-			Direction<N> operator-(const Direction<N>& d2)
-			{
-				return Direction<N>(frame, vector-d2.vector);
-			}
-			
-			void operator*=(const float& f)
-			{
-				(*vector) *= f;
-			}
-			
-			Position<N> operator+(const Position<N>& p2)
-			{
-				return Position<N>(frame, vector+p2.getValue());
-			}
-			
-			Position<N> operator-(const Position<N>& p2)
-			{
-				return Position<N>(frame, vector-p2.getValue());
-			}
-			
-			float operator()(const unsigned int& index)
-			{
-				return vector->get(index);
-			}
-			
-			REF_FRAME getFrame() const
-			{
-				return frame;
-			}
-			
-			Vec<N> getValue() const
-			{
-				return *vector;
-			}
-			
-		private:
-			std::shared_ptr<Vec<N>> vector;
-			REF_FRAME frame;
-	};
 	
 	
 	template<std::size_t N>

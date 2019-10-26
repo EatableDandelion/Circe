@@ -48,25 +48,31 @@ int main()
 			}
 		}
 	}*/
-	Quaternion q;
-	Mat44 m;
+	
+	
+	/*Plot2d plot("1st plot");
+	plot.setXAxisLabel("Time (s)");
+	plot.addSeries("test.txt", "y(t)", 0, 1, LineType::LINE);
+	plot.addSeries("test.txt", "exp(t)", 0, 2, LineType::LINE);
+	plot.display();*/
+	
+	Polynomial p({0.0f, 0.0f, 1.5f});
+	Polynomial p2({0.2f, 0.5f, 0.5f});
+	Polynomial p3 = Circe::LegendrePolynomial(5);
+	
+	Vec<2> u({1.0f,1.0f});
+	Mat<2> m;
+	m(0,0) = 1.0f;
+	m(0,1) = -0.5f;
+	m(1,1) = 1.0f;
+	m(1,0) = -0.2f;
+	float t = 0.0f;
 	for(int i = 0; i<100; i++)
 	{
-		q.addAngle(0.01f, 0.1f, 0.1f, false);
-		
-		
+		RK4(u, m, 0.1f);
+		t += 0.1f;
+		std::cout << u << " " << exp(t) << std::endl;		
 	}
-	float prev = 0;
-	float theta = 0;
-	for(int i = 0; i<100; i++)
-	{
-		q.addAngle(0.0f, 0.0f, 0.1f, true);
-		m = Mat44::rotationMatrix(q);
-		theta = atan2(m(1,0), m(0,0));
-		std::cout << theta << std::endl;
-		prev = theta;
-	}
-	//
 	
 	return 0;
 }

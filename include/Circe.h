@@ -5,3 +5,7 @@
 #include "Spinor.h"
 #include "Utils.h"
 #include "Profile.h"
+#include "FileUtils.h"
+#include "Plot.h"
+#include "Polynomials.h"
+#include "TimeIntegration.h"
