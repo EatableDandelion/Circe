@@ -9,11 +9,11 @@
 namespace Circe
 {	
 	//Fwd declaration
-	template<std::size_t N> struct Vec;
-	template<> struct Vec<2>;
-	template<> struct Vec<3>;
-	template<> struct Vec<4>;
-	template<std::size_t N, std::size_t M> struct Mat;
+	template<std::size_t N, typename Real> struct Vec;
+	template<typename Real> struct Vec<2,Real>;
+	template<typename Real> struct Vec<3,Real>;
+	template<typename Real> struct Vec<4,Real>;
+	template<std::size_t N, std::size_t M, typename Real> struct Mat;
 	struct Mat44;
 	struct ITransform;
 	template<std::size_t N> struct Transform;
@@ -27,33 +27,61 @@ namespace Circe
 	};
 	
 	//A few useful functions
-	extern float min(const float& a, const float& b);
-	extern float max(const float& a, const float& b);
-	extern float operator ""_deg(long double angle);
-	extern float operator ""_rad(long double angle);
+	template<typename Real>
+	extern Real min(const Real& a, const Real& b)
+	{
+		return std::min(a,b);
+	}
 	
-	float cross(const Vec<2>& a, const Vec<2>& b);
-	Vec<3> cross(const Vec<3>& a, const Vec<3>& b);
+	template<typename Real>
+	extern Real max(const Real& a, const Real& b)
+	{
+		return std::max(a,b);
+	}
+	
+	/*template<typename Real>
+	extern Real operator ""_deg(const Real& angle)
+	{
+		return angle*3.141596/180.0;
+	}
+	
+	template<typename Real>
+	extern Real operator ""_rad(long double angle)
+	{
+		return angle;
+	}*/
+	
+	template<typename Real>
+	Real cross(const Vec<2, Real>& a, const Vec<2, Real>& b)
+	{
+		return a(0)*b(1)-a(1)*b(0);
+	}
+	
+	template<typename Real>
+	Vec<3, Real> cross(const Vec<3, Real>& a, const Vec<3, Real>& b)
+	{
+		return Vec<3, Real>(a(1)*b(2)-a(2)*b(1),-a(0)*b(2)+a(2)*b(0),a(0)*b(1)-a(1)*b(0));
+	}
 	
 	//Scalar product
-	template<std::size_t N>
-	float dot(const Vec<N>& a, const Vec<N>& b)
+	template<std::size_t N, typename Real>
+	Real dot(const Vec<N, Real>& a, const Vec<N, Real>& b)
 	{
 		return a.dot(b);
 	}
 	
 	//Inequality operator
-	template<std::size_t N>
-	bool operator!=(const Vec<N>& a, const Vec<N>& b)
+	template<std::size_t N, typename Real>
+	bool operator!=(const Vec<N, Real>& a, const Vec<N, Real>& b)
 	{
 		return !(a==b);
 	}
 	
 	//Add two vectors
-	template<std::size_t N>
-	Vec<N> operator+(const Vec<N>& a, const Vec<N>& b)
+	template<std::size_t N, typename Real>
+	Vec<N, Real> operator+(const Vec<N, Real>& a, const Vec<N, Real>& b)
 	{
-		Vec<N> res;
+		Vec<N, Real> res;
 		for(int i=0; i<N;++i)
 		{
 			res(i)=a(i)+b(i);
@@ -62,10 +90,10 @@ namespace Circe
 	}
 				
 	//Subtract two vectors
-	template<std::size_t N>
-	Vec<N> operator-(const Vec<N>& a, const Vec<N>& b)
+	template<std::size_t N, typename Real>
+	Vec<N, Real> operator-(const Vec<N, Real>& a, const Vec<N, Real>& b)
 	{
-		Vec<N> res;
+		Vec<N, Real> res;
 		for(int i=0; i<N;++i)
 		{
 			res(i)=a(i)-b(i);
@@ -74,10 +102,10 @@ namespace Circe
 	}
 	
 	//Negative vector
-	template<std::size_t N>
-	Vec<N> operator-(const Vec<N>& a)
+	template<std::size_t N, typename Real>
+	Vec<N, Real> operator-(const Vec<N, Real>& a)
 	{
-		Vec<N> res;
+		Vec<N, Real> res;
 		for(int i=0; i<N;++i)
 		{
 			res(i)=-a(i);
@@ -86,10 +114,10 @@ namespace Circe
 	}
 	
 	//Multiply vector term by term
-	template<std::size_t N>
-	Vec<N> operator*(const Vec<N>& a, const Vec<N>& b)
+	template<std::size_t N, typename Real>
+	Vec<N, Real> operator*(const Vec<N, Real>& a, const Vec<N, Real>& b)
 	{
-		Vec<N> res;
+		Vec<N, Real> res;
 		for(int i=0; i<N;++i)
 		{
 			res(i)=a(i)*b(i);
@@ -98,10 +126,10 @@ namespace Circe
 	}
 	
 	//Divide vector term by term
-	template<std::size_t N>
-	Vec<N> operator/(const Vec<N>& a, const Vec<N>& b)
+	template<std::size_t N, typename Real>
+	Vec<N, Real> operator/(const Vec<N, Real>& a, const Vec<N, Real>& b)
 	{
-		Vec<N> res;
+		Vec<N, Real> res;
 		for(int i=0; i<N;++i)
 		{
 			res(i)=a(i)/b(i);
@@ -110,10 +138,10 @@ namespace Circe
 	}
 	
 	//Add float to a vector
-	template<std::size_t N>
-	Vec<N> operator+(const Vec<N>& a, const float& b)
+	template<std::size_t N, typename Real>
+	Vec<N, Real> operator+(const Vec<N, Real>& a, const Real& b)
 	{
-		Vec<N> res;
+		Vec<N, Real> res;
 		for(int i=0; i<N;++i)
 		{
 			res(i)=a(i)+b;
@@ -121,17 +149,17 @@ namespace Circe
 		return res;
 	}
 	
-	template<std::size_t N>
-	Vec<N> operator+(const float& b, const Vec<N>& a)
+	template<std::size_t N, typename Real>
+	Vec<N, Real> operator+(const Real& b, const Vec<N, Real>& a)
 	{
 		return a+b;
 	}
 	
 	//Multiply float to this vector
-	template<std::size_t N>
-	Vec<N> operator*(const Vec<N>& a, const float& b)
+	template<std::size_t N, typename Real>
+	Vec<N, Real> operator*(const Vec<N, Real>& a, const Real& b)
 	{
-		Vec<N> res;
+		Vec<N, Real> res;
 		for(int i=0; i<N;++i)
 		{
 			res(i)=a(i)*b;
@@ -139,17 +167,17 @@ namespace Circe
 		return res;
 	}
 	
-	template<std::size_t N>
-	Vec<N> operator*(const float& b, const Vec<N>& a)
+	template<std::size_t N, typename Real>
+	Vec<N, Real> operator*(const Real& b, const Vec<N, Real>& a)
 	{
 		return a*b;
 	}
 	
 	//Divide float to this vector
-	template<std::size_t N>
-	Vec<N> operator/(const Vec<N>& a, const float& b)
+	template<std::size_t N, typename Real>
+	Vec<N, Real> operator/(const Vec<N, Real>& a, const Real& b)
 	{
-		Vec<N> res;
+		Vec<N, Real> res;
 		for(int i=0; i<N;++i)
 		{
 			res(i)=a(i)/b;
@@ -158,41 +186,41 @@ namespace Circe
 	}
 	
 	//Get the norm of the vector
-	template<std::size_t N>
-	float length(const Vec<N>& a)
+	template<std::size_t N, typename Real>
+	Real length(const Vec<N, Real>& a)
 	{
 		return sqrt(dot(a, a));
 	}
 	
 	//Normalize the vector
-	template<std::size_t N>
-	void normalize(Vec<N>& v)
+	template<std::size_t N, typename Real>
+	void normalize(Vec<N, Real>& v)
 	{
 		v=v/Circe::length(v);
 	}
 	
 	//Get distance square
-	template<std::size_t N>
-	float distanceSquare(const Vec<N>& a, const Vec<N>& b)
+	template<std::size_t N, typename Real>
+	Real distanceSquare(const Vec<N, Real>& a, const Vec<N, Real>& b)
 	{
 		return (a-b).dot(a-b);
 	}
 	
 	//Get distance
-	template<std::size_t N>
-	float distance(const Vec<N>& a, const Vec<N>& b)
+	template<std::size_t N, typename Real>
+	Real distance(const Vec<N, Real>& a, const Vec<N, Real>& b)
 	{
 		return sqrt(distanceSquare(a, b));
 	}
 	
 	//Matrix multiplication, returns v*A
-	template<std::size_t N, std::size_t M>
-	Vec<M> operator*(const Vec<N>& a, const Mat<N, M>& m)
+	template<std::size_t N, std::size_t M, typename Real>
+	Vec<M, Real> operator*(const Vec<N, Real>& a, const Mat<N, M, Real>& m)
 	{
-		Vec<M> result;
+		Vec<M, Real> result;
 		for(int j = 0; j<M; ++j)
 		{
-			float value = 0.0f;
+			Real value = (Real)0.0;
 			for(int i=0; i<N;++i)
 			{
 				value+=a(i)*m(i,j);
@@ -203,7 +231,7 @@ namespace Circe
 	}
 
 	
-	template<std::size_t N>
+	template<std::size_t N, typename Real = float>
 	struct Vec
 	{
 		public:
@@ -211,14 +239,14 @@ namespace Circe
 			{
 				for(int i=0;i<N;++i)
 				{
-					data[i]=0.0f;
+					data[i]=(Real)0.0;
 				}
 			}
 			
-			Vec(const std::initializer_list<float>& values)
+			Vec(const std::initializer_list<Real>& values)
 			{
 				size_t i = 0;
-				for(float f : values)
+				for(Real f : values)
 				{
 					data[i]=f;
 					i++;
@@ -226,7 +254,7 @@ namespace Circe
 			}
 			
 			//Copy constructor
-			Vec(const Vec<N>& v)
+			Vec(const Vec<N, Real>& v)
 			{
 				for(int i=0;i<N;++i)
 				{
@@ -234,7 +262,7 @@ namespace Circe
 				}
 			}
 			
-			Vec(const float& f)
+			Vec(const Real& f)
 			{
 				for(int i=0;i<N;++i)
 				{
@@ -243,7 +271,7 @@ namespace Circe
 			}
 			
 			//Copy assignment
-			Vec<N>& operator=(const Vec<N>& b)
+			Vec<N>& operator=(const Vec<N, Real>& b)
 			{
 				for(int i=0;i<N;++i)
 				{
@@ -253,7 +281,7 @@ namespace Circe
 			}
 			
 			//Add a vector to this one
-			void operator+=(const Vec<N>& b)
+			void operator+=(const Vec<N, Real>& b)
 			{
 				for(int i=0; i<N;++i)
 				{
@@ -262,7 +290,7 @@ namespace Circe
 			}
 			
 			//Subtract a vector to this one
-			void operator-=(const Vec<N>& b)
+			void operator-=(const Vec<N, Real>& b)
 			{
 				for(int i=0; i<N;++i)
 				{
@@ -271,7 +299,7 @@ namespace Circe
 			}
 
 			//Multiply vector term by term
-			void operator*=(const Vec<N>& b)
+			void operator*=(const Vec<N, Real>& b)
 			{
 				for(int i=0; i<N;++i)
 				{
@@ -280,7 +308,7 @@ namespace Circe
 			}
 			
 			//Divide vector term by term
-			void operator/=(const Vec<N>& b)
+			void operator/=(const Vec<N, Real>& b)
 			{
 				for(int i=0; i<N;++i)
 				{
@@ -289,7 +317,7 @@ namespace Circe
 			}
 
 			//Add float to this vector
-			void operator+=(const float& b)
+			void operator+=(const Real& b)
 			{
 				for(int i=0; i<N;++i)
 				{
@@ -298,7 +326,7 @@ namespace Circe
 			}
 			
 			//Subtract float to this vector
-			void operator-=(const float& b)
+			void operator-=(const Real& b)
 			{
 				for(int i=0; i<N;++i)
 				{
@@ -307,7 +335,7 @@ namespace Circe
 			}
 
 			//Multiply float to this vector
-			void operator*=(const float& b)
+			void operator*=(const Real& b)
 			{
 				for(int i=0; i<N;++i)
 				{
@@ -316,7 +344,7 @@ namespace Circe
 			}
 			
 			//Divide float to this vector
-			void operator/=(const float& b)
+			void operator/=(const Real& b)
 			{
 				for(int i=0; i<N;++i)
 				{
@@ -325,7 +353,7 @@ namespace Circe
 			}
 			
 			//Equality operator
-			bool operator==(const Vec<N>& b) const
+			bool operator==(const Vec<N, Real>& b) const
 			{
 				for(int i=0;i<N;++i)
 				{
@@ -338,9 +366,9 @@ namespace Circe
 			}
 	
 			//Dot product
-			float dot(const Vec<N>& b) const
+			Real dot(const Vec<N, Real>& b) const
 			{
-				float result(0.0f);
+				Real result(0.0);
 				for(int i=0; i<N;++i)
 				{
 					result+=data[i]*b(i);
@@ -349,14 +377,14 @@ namespace Circe
 			}
 		
 			//Get one element of this vector
-			float operator()(const unsigned int& index) const
+			Real operator()(const unsigned int& index) const
 			{
 				assert(index<N);
 				return data[index];
 			}
 	
 			//Set one element of this vector
-			float &operator()(const unsigned int& index)
+			Real &operator()(const unsigned int& index)
 			{
 				assert(index<N);
 				return data[index];
@@ -366,36 +394,36 @@ namespace Circe
 			{
 				for(int i =0; i<N; ++i)
 				{
-					data[i]=0.0f;
+					data[i]=0.0;
 				}
 			}
 			
 		private:
-			float data[N];
+			Real data[N];
 	};
 	
-	template<>
-	struct Vec<2>
+	template<typename Real = float>
+	struct Vec<2, Real>
 	{
 		public:
-			Vec():x(0.0f), y(0.0f)
+			Vec():x((Real)0.0), y((Real)0.0)
 			{}
 		
-			Vec(const float& x, const float& y):x(x), y(y)
+			Vec(const Real& x, const Real& y):x(x), y(y)
 			{}
 			
 			//Copy constructor
-			Vec(const Vec<2>& v):x(v.x), y(v.y)
+			Vec(const Vec<2, Real>& v):x(v.x), y(v.y)
 			{}
 			
-			Vec(const float& f)
+			Vec(const Real& f)
 			{
 				x=f;
 				y=f;
 			}
 			
 			//Copy assignment
-			Vec<2>& operator=(const Vec<2>& b)
+			Vec<2, Real>& operator=(const Vec<2, Real>& b)
 			{
 				x=b.x;
 				y=b.y;
@@ -403,75 +431,75 @@ namespace Circe
 			}
 			
 			//Add a vector to this one
-			void operator+=(const Vec<2>& b)
+			void operator+=(const Vec<2, Real>& b)
 			{
 				x+=b.x;
 				y+=b.y;
 			}
 			
 			//Subtract a vector to this one
-			void operator-=(const Vec<2>& b)
+			void operator-=(const Vec<2, Real>& b)
 			{
 				x-=b.x;
 				y-=b.y;
 			}
 
 			//Multiply vector term by term
-			void operator*=(const Vec<2>& b)
+			void operator*=(const Vec<2, Real>& b)
 			{
 				x*=b.x;
 				y*=b.y;
 			}
 			
 			//Divide vector term by term
-			void operator/=(const Vec<2>& b)
+			void operator/=(const Vec<2, Real>& b)
 			{
 				x/=b.x;
 				y/=b.y;
 			}
 
 			//Add float to this vector
-			void operator+=(const float& b)
+			void operator+=(const Real& b)
 			{
 				x+=b;
 				y+=b;
 			}
 			
 			//Subtract float to this vector
-			void operator-=(const float& b)
+			void operator-=(const Real& b)
 			{
 				x-=b;
 				y-=b;
 			}
 
 			//Multiply float to this vector
-			void operator*=(const float& b)
+			void operator*=(const Real& b)
 			{
 				x*=b;
 				y*=b;
 			}
 			
 			//Divide float to this vector
-			void operator/=(const float& b)
+			void operator/=(const Real& b)
 			{
 				x/=b;
 				y/=b;
 			}
 			
 			//Equality operator
-			bool operator==(const Vec<2>& b) const
+			bool operator==(const Vec<2, Real>& b) const
 			{
 				return (x==b.x && y==b.y);
 			}
 	
 			//Dot product
-			float dot(const Vec<2>& b) const
+			Real dot(const Vec<2, Real>& b) const
 			{
 				return x*b.x + y*b.y;
 			}
 	
 			//Get one element of this vector
-			float operator()(const unsigned int& index) const
+			Real operator()(const unsigned int& index) const
 			{
 				assert(index<2);
 				if(index==0)return x;
@@ -480,7 +508,7 @@ namespace Circe
 			}
 	
 			//Set one element of this vector
-			float &operator()(const unsigned int& index)
+			Real &operator()(const unsigned int& index)
 			{
 				assert(index<2);
 				if(index==0)return x;
@@ -490,11 +518,11 @@ namespace Circe
 			
 			void reset()
 			{
-				x=0.0f;
-				y=0.0f;
+				x=(Real)0.0;
+				y=(Real)0.0;
 			}
 			
-			Vec<2> rotate(const Complex& q)
+			Vec<2, Real> rotate(const Complex& q)
 			{
 				float c=q.getReal();
 				float s=q.getImaginary();
@@ -504,7 +532,7 @@ namespace Circe
 				return *this;
 			}
 			
-			Vec<2> rotateInv(const Complex& q)
+			Vec<2, Real> rotateInv(const Complex& q)
 			{
 				float c=q.getReal();
 				float s=q.getImaginary();
@@ -515,34 +543,24 @@ namespace Circe
 			}
 			
 		private:
-			float x, y;
+			Real x, y;
 	};
 	
-	template<>
-	struct Vec<3>
+	template<typename Real = float>
+	struct Vec<3, Real>
 	{
 		public:
-			Vec():x(0.0f), y(0.0f), z(0.0f)
+			Vec():x((Real)0.0), y((Real)0.0f), z((Real)0.0f)
 			{}
-			
-			/*Vec(const std::initializer_list<float>& values)
-			{
-				int index = 0;
-				for(float value : values)
-				{
-					
-					index++;
-				}
-			}*/
 		
-			Vec(const float& x, const float& y, const float& z):x(x), y(y), z(z)
+			Vec(const Real& x, const Real& y, const Real& z):x(x), y(y), z(z)
 			{}
 			
 			//Copy constructor
-			Vec(const Vec<3>& v):x(v.x), y(v.y), z(v.z)
+			Vec(const Vec<3, Real>& v):x(v.x), y(v.y), z(v.z)
 			{}
 			
-			Vec(const float& f)
+			Vec(const Real& f)
 			{
 				x=f;
 				y=f;
@@ -550,7 +568,7 @@ namespace Circe
 			}
 			
 			//Copy assignment
-			Vec<3>& operator=(const Vec<3>& b)
+			Vec<3, Real>& operator=(const Vec<3, Real>& b)
 			{
 				x=b.x;
 				y=b.y;
@@ -559,7 +577,7 @@ namespace Circe
 			}
 			
 			//Add a vector to this one
-			void operator+=(const Vec<3>& b)
+			void operator+=(const Vec<3, Real>& b)
 			{
 				x+=b.x;
 				y+=b.y;
@@ -567,7 +585,7 @@ namespace Circe
 			}
 			
 			//Subtract a vector to this one
-			void operator-=(const Vec<3>& b)
+			void operator-=(const Vec<3, Real>& b)
 			{
 				x-=b.x;
 				y-=b.y;
@@ -575,7 +593,7 @@ namespace Circe
 			}
 
 			//Multiply vector term by term
-			void operator*=(const Vec<3>& b)
+			void operator*=(const Vec<3, Real>& b)
 			{
 				x*=b.x;
 				y*=b.y;
@@ -583,7 +601,7 @@ namespace Circe
 			}
 			
 			//Divide vector term by term
-			void operator/=(const Vec<3>& b)
+			void operator/=(const Vec<3, Real>& b)
 			{
 				x/=b.x;
 				y/=b.y;
@@ -591,7 +609,7 @@ namespace Circe
 			}
 
 			//Add float to this vector
-			void operator+=(const float& b)
+			void operator+=(const Real& b)
 			{
 				x+=b;
 				y+=b;
@@ -599,7 +617,7 @@ namespace Circe
 			}
 			
 			//Subtract float to this vector
-			void operator-=(const float& b)
+			void operator-=(const Real& b)
 			{
 				x-=b;
 				y-=b;
@@ -607,7 +625,7 @@ namespace Circe
 			}
 
 			//Multiply float to this vector
-			void operator*=(const float& b)
+			void operator*=(const Real& b)
 			{
 				x*=b;
 				y*=b;
@@ -615,7 +633,7 @@ namespace Circe
 			}
 			
 			//Divide float to this vector
-			void operator/=(const float& b)
+			void operator/=(const Real& b)
 			{
 				x/=b;
 				y/=b;
@@ -623,29 +641,29 @@ namespace Circe
 			}
 			
 			//Equality operator
-			bool operator==(const Vec<3>& b) const
+			bool operator==(const Vec<3, Real>& b) const
 			{
 				return (x==b.x && y==b.y && z==b.z);
 			}
 	
 			//Dot product
-			float dot(const Vec<3>& b) const
+			Real dot(const Vec<3, Real>& b) const
 			{
 				return x*b.x + y*b.y + z*b.z;
 			}
 			
 			//Get one element of this vector
-			float operator()(const unsigned int& index) const
+			Real operator()(const unsigned int& index) const
 			{
 				assert(index<3);
 				if(index==0)return x;
 				if(index==1)return y;
 				if(index==2)return z;
-				return 0.0f;
+				return (Real)0.0;
 			}
 	
 			//Set one element of this vector
-			float& operator()(const unsigned int& index)
+			Real& operator()(const unsigned int& index)
 			{
 				assert(index<3);
 				if(index==0)return x;
@@ -656,14 +674,14 @@ namespace Circe
 			
 			void reset()
 			{
-				x=0.0f;
-				y=0.0f;
-				z=0.0f;
+				x=(Real)0.0;
+				y=(Real)0.0;
+				z=(Real)0.0;
 			}
 			
-			Vec<3> rotate(const Quaternion& q)
+			Vec<3, Real> rotate(const Quaternion& q)
 			{
-				Quaternion v(0.0f, x, y, z);
+				Quaternion v((Real)0.0, x, y, z);
 				Quaternion p=q;
 				p.normalize();
 				Quaternion pConj=p.getConjugate();
@@ -674,30 +692,30 @@ namespace Circe
 				return *this;
 			}
 			
-			Vec<3> rotateInv(const Quaternion& p)
+			Vec<3, Real> rotateInv(const Quaternion& p)
 			{
 				return rotate(p.getConjugate());
 			}
 			
 		private:
-			float x, y, z, padding;
+			Real x, y, z, padding;
 	};
 	
-	template<>
-	struct Vec<4>
+	template<typename Real = float>
+	struct Vec<4, Real>
 	{
 		public:
-			Vec():x(0.0f), y(0.0f), z(0.0f), w(0.0f)
+			Vec():x((Real)0.0), y((Real)0.0), z((Real)0.0), w((Real)0.0)
 			{}
 		
-			Vec(const float& x, const float& y, const float& z, const float& w):x(x), y(y), z(z), w(w)
+			Vec(const Real& x, const Real& y, const Real& z, const Real& w):x(x), y(y), z(z), w(w)
 			{}
 			
 			//Copy constructor
-			Vec(const Vec<4>& v):x(v.x), y(v.y), z(v.z), w(v.w)
+			Vec(const Vec<4, Real>& v):x(v.x), y(v.y), z(v.z), w(v.w)
 			{}
 			
-			Vec(const float& f)
+			Vec(const Real& f)
 			{
 				x=f;
 				y=f;
@@ -706,7 +724,7 @@ namespace Circe
 			}
 			
 			//Copy assignment
-			Vec<4>& operator=(const Vec<4>& b)
+			Vec<4, Real>& operator=(const Vec<4, Real>& b)
 			{
 				x=b.x;
 				y=b.y;
@@ -716,7 +734,7 @@ namespace Circe
 			}
 			
 			//Add a vector to this one
-			void operator+=(const Vec<4>& b)
+			void operator+=(const Vec<4, Real>& b)
 			{
 				x+=b.x;
 				y+=b.y;
@@ -725,7 +743,7 @@ namespace Circe
 			}
 			
 			//Subtract a vector to this one
-			void operator-=(const Vec<4>& b)
+			void operator-=(const Vec<4, Real>& b)
 			{
 				x-=b.x;
 				y-=b.y;
@@ -734,7 +752,7 @@ namespace Circe
 			}
 
 			//Multiply vector term by term
-			void operator*=(const Vec<4>& b)
+			void operator*=(const Vec<4, Real>& b)
 			{
 				x*=b.x;
 				y*=b.y;
@@ -743,7 +761,7 @@ namespace Circe
 			}
 			
 			//Divide vector term by term
-			void operator/=(const Vec<4>& b)
+			void operator/=(const Vec<4, Real>& b)
 			{
 				x/=b.x;
 				y/=b.y;
@@ -752,7 +770,7 @@ namespace Circe
 			}
 
 			//Add float to this vector
-			void operator+=(const float& b)
+			void operator+=(const Real& b)
 			{
 				x+=b;
 				y+=b;
@@ -761,7 +779,7 @@ namespace Circe
 			}
 			
 			//Subtract float to this vector
-			void operator-=(const float& b)
+			void operator-=(const Real& b)
 			{
 				x-=b;
 				y-=b;
@@ -770,7 +788,7 @@ namespace Circe
 			}
 
 			//Multiply float to this vector
-			void operator*=(const float& b)
+			void operator*=(const Real& b)
 			{
 				x*=b;
 				y*=b;
@@ -779,7 +797,7 @@ namespace Circe
 			}
 			
 			//Divide float to this vector
-			void operator/=(const float& b)
+			void operator/=(const Real& b)
 			{
 				x/=b;
 				y/=b;
@@ -788,30 +806,30 @@ namespace Circe
 			}
 			
 			//Equality operator
-			bool operator==(const Vec<4>& b) const
+			bool operator==(const Vec<4, Real>& b) const
 			{
 				return (x==b.x && y==b.y && z==b.z && w==b.w);
 			}
 	
 			//Dot product
-			float dot(const Vec<4>& b) const
+			Real dot(const Vec<4, Real>& b) const
 			{
 				return x*b.x + y*b.y + z*b.z + w*b.w;
 			}
 	
 			//Get one element of this vector
-			float operator()(const unsigned int& index) const
+			Real operator()(const unsigned int& index) const
 			{
 				assert(index<4);
 				if(index==0)return x;
 				if(index==1)return y;
 				if(index==2)return z;
 				if(index==3)return w;
-				return 0.0f;
+				return (Real)0.0f;
 			}
 	
 			//Set one element of this vector
-			float &operator()(const unsigned int& index)
+			Real &operator()(const unsigned int& index)
 			{
 				assert(index<4);
 				if(index==0)return x;
@@ -823,19 +841,19 @@ namespace Circe
 			
 			void reset()
 			{
-				x=0.0f;
-				y=0.0f;
-				z=0.0f;
-				w=0.0f;
+				x=(Real)0.0f;
+				y=(Real)0.0f;
+				z=(Real)0.0f;
+				w=(Real)0.0f;
 			}
 			
 		private:
-			float x, y, z, w;
+			Real x, y, z, w;
 	};
 	
-	using Vec2=Vec<2>;
-	using Vec3=Vec<3>;
-	using Vec4=Vec<4>;
+	using Vec2=Vec<2, float>;
+	using Vec3=Vec<3, float>;
+	using Vec4=Vec<4, float>;
 	
 	
 	template<std::size_t N>
@@ -963,7 +981,7 @@ namespace Circe
 			REF_FRAME frame;
 	};
 	
-	template<std::size_t N, std::size_t M=N>
+	template<std::size_t N, std::size_t M=N, typename Real = float>
 	struct Mat
 	{	
 		public:
@@ -973,35 +991,44 @@ namespace Circe
 				{
 					for(int j = 0; j<M; ++j)
 					{
-						data[i][j]=0.0f;
+						data.push_back((Real)0.0);
 					}
 				}	
 			}
 			
-			Mat(const std::initializer_list<float>& values)
+			Mat(const std::initializer_list<Real>& values)
 			{
+				
+				for(int i = 0; i<N; ++i)
+				{
+					for(int j = 0; j<M; ++j)
+					{
+						data.push_back((Real)0.0);
+					}
+				}	
+				
 				size_t i = 0;
 				size_t j = 0;
-				for(float f : values)
+				for(Real f : values)
 				{
 					if(j==M)
 					{
 						i++;
 						j=0;
 					}
-					data[i][j]=f;
+					data[i*M+j] =f;
 					j++;
 				}
 			}
 			
 			
-			Mat<N,M> &operator=(const Mat<N,M>& m)
+			Mat<N,M,Real> &operator=(const Mat<N,M,Real>& m)
 			{
 				for(int i=0;i<N;++i)
 				{
 					for(int j = 0; j<M; ++j)
 					{
-						data[i][j]=m(i,j);
+						data[i*M+j] = m(i,j);
 					}
 				}
 				return *this;
@@ -1012,7 +1039,7 @@ namespace Circe
 			{
 				for(int i = 0; i<min(N, M); ++i)
 				{
-					data[i][i]=1.0f;
+					data[i*M+i]=(Real)1.0;
 				}	
 			}
 			
@@ -1023,19 +1050,19 @@ namespace Circe
 				{
 					for(int j = 0; j<M; ++j)
 					{
-						data[i][j]=0.0f;
+						data[i*M+j]=(Real)0.0;
 					}
 				}	
 			}
 			
-			Mat<M,N> getTranspose() const
+			Mat<M,N,Real> getTranspose() const
 			{
 				Mat<M,N> result;
 				for(int i = 0; i<N; ++i)
 				{
 					for(int j = 0; j<M; ++j)
 					{
-						result(j,i)=data[i][j];
+						result(j,i)=get(i,j);
 					}
 				}	
 				return result;
@@ -1043,17 +1070,17 @@ namespace Circe
 			
 			//Matrix multiplication to matrix
 			template<std::size_t O>
-			Mat<N,O> operator*(const Mat<M,O>& m) const
+			Mat<N,O,Real> operator*(const Mat<M,O,Real>& m) const
 			{
 				Mat<N,O> result;
 				for(int i = 0; i<N; ++i)
 				{
 					for(int j = 0; j<O; ++j)
 					{
-						float value = 0.0f;
+						Real value = (Real)0.0;
 						for(int k=0;k<M; ++k)
 						{
-							value+=data[i][k]*m(k,j);
+							value+=get(i,k)*m(k,j);
 						}
 						result(i,j)=value;
 					}
@@ -1062,15 +1089,15 @@ namespace Circe
 			}
 			
 			//Matrix multiplication to vector, returns A*v
-			Vec<N> operator*(const Vec<M>& v) const
+			Vec<N,Real> operator*(const Vec<M,Real>& v) const
 			{
-				Vec<N> result;
+				Vec<N,Real> result;
 				for(int i=0; i<N;++i)
 				{
-					float value = 0.0f;
+					Real value = (Real)0.0;
 					for(int j = 0; j<M; ++j)
 					{
-						value+=v(j)*data[i][j];
+						value+=v(j)*get(i,j);
 					}
 					result(i)=value;
 				}
@@ -1078,90 +1105,154 @@ namespace Circe
 			}
 			
 			//Get the matrix multiplied by a scalar
-			Vec<M> operator*(const float f) const
+			Mat<N,M,Real> operator*(const Real& f) const
 			{
-				Mat<N,M> result;
+				Mat<N,M,Real> result;
 				for(int i = 0; i<N; ++i)
 				{
 					for(int j = 0; j<M; ++j)
 					{
-						result(i,j)=data[i][j]*f;
+						result(i,j)=get(i,j)*f;
 					}
 				}	
 				return result;	
 			}
 			
-			void operator+=(const Mat<N,M>& m)
+			Mat<N,M,Real> operator/(const Real& f) const
+			{
+				Mat<N,M,Real> result;
+				for(int i = 0; i<N; ++i)
+				{
+					for(int j = 0; j<M; ++j)
+					{
+						result(i,j)=get(i,j)/f;
+					}
+				}	
+				return result;	
+			}
+			
+			void operator+=(const Mat<N,M,Real>& m)
 			{
 				for(int i = 0; i<N; ++i)
 				{
 					for(int j = 0; j<M; ++j)
 					{
-						data[i][j]+=m(i,j);
+						data[i*M+j] += m(i,j);
 					}
 				}	
 			}
 			
-			void operator-=(const Mat<N,M>& m)
+			Mat<N,M,Real> operator+(const Mat<N,M,Real>& m) const
+			{
+				Mat<N,M,Real> res;
+				for(int i = 0; i<N; ++i)
+				{
+					for(int j = 0; j<M; ++j)
+					{
+						res(i,j)=get(i,j)+m(i,j);
+					}
+				}
+				return res;
+			}
+			
+			void operator-=(const Mat<N,M,Real>& m)
 			{
 				for(int i = 0; i<N; ++i)
 				{
 					for(int j = 0; j<M; ++j)
 					{
-						data[i][j]-=m(i,j);
+						data[i*M+j]-=m(i,j);
 					}
 				}	
 			}
 			
 			//Multiply by a scalar
-			void operator*=(const float& f)
+			void operator*=(const Real& f)
 			{
 				for(int i = 0; i<N; ++i)
 				{
 					for(int j = 0; j<M; ++j)
 					{
-						data[i][j]*=f;
+						data[i*M+j]*=f;
 					}
 				}
 			}
 			
 			//Get the coefficient at row i and column j
-			float operator()(const int& i, const int& j) const
+			Real operator()(const int& i, const int& j) const
 			{
-				return data[i][j];
+				return data[i*M+j];
 			}
 			
 			//Set the coefficient at row i and column j
-			float &operator()(const int& i, const int& j)
+			Real &operator()(const int& i, const int& j)
 			{
-				return data[i][j];
+				return data[i*M+j];;
 			}
 			
-			float* getData()
+			Real* getData()
 			{
-				static float res[N*M];
+				static Real res[N*M];
 				int k=0;
 				for(int i=0; i<N; i++)
 				{
 					for(int j=0; j<M; j++)
 					{
-						res[k]=data[i][j];
+						res[k] = get(i,j);
 						k++;
 					}
 				}
 				return res;
 			}
 			
-			float get(const int& i, const int& j) const
+			Real get(const int& i, const int& j) const
 			{
-				return data[i][j];
+				return data[i*M+j];
 			}
 			
+			Vec<M, Real> getRow(const int& i) const
+			{
+				Vec<N, Real> row;
+				for(int j=0; j<M; j++)
+				{
+					row(j) = get(i,j);
+				}
+				return row;
+			}
+			
+			Vec<N, Real> getColumn(const int& j) const
+			{
+				Vec<N, Real> column;
+				for(int i=0; i<N; i++)
+				{
+					column(i) = get(i,j);
+				}
+				return column;
+			}
+			
+			void setRow(const int& i, const Vec<M, Real>& row)
+			{
+				for(int j=0; j<M; j++)
+				{
+					data[i*M+j] = row(j);
+				}
+			}
+			
+			void setColumn(const int& j, const Vec<N, Real>& column)
+			{
+				for(int i=0; i<N; i++)
+				{
+					data[i*M+j] = column(i);
+				}
+			}
+				
 		private:
-			float data[N][M];
+			std::vector<Real> data;
+			//Real data[N*M];
 	};
 	
-	struct Mat44:public Mat<4>
+	
+	struct Mat44 : public Mat<4>
 	{
 		public:
 			static Mat44 positionMatrix(const Position<2>& v)
@@ -1591,8 +1682,8 @@ namespace Circe
 	
 	
 	
-	template<std::size_t N>
-	std::ostream& operator<<(std::ostream &strm, const Vec<N> &v)
+	template<std::size_t N, typename Real>
+	std::ostream& operator<<(std::ostream &strm, const Vec<N, Real> &v)
 	{
 		strm << "[" << v(0);
 		for(int i=1; i<N;++i){
@@ -1623,8 +1714,8 @@ namespace Circe
 		return strm << v.getValue() << frame;
 	}
 	
-	template<std::size_t N, std::size_t M>
-	std::ostream& operator<<(std::ostream &strm, const Mat<N, M> &m)
+	template<std::size_t N, std::size_t M, typename Real>
+	std::ostream& operator<<(std::ostream &strm, const Mat<N, M, Real> &m)
 	{
 		std::cout.precision(3);
 		for(int i=0; i<N;++i){

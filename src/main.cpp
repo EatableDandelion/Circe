@@ -74,5 +74,10 @@ int main()
 		std::cout << u << " " << exp(t) << std::endl;		
 	}
 	
+	KillSwitch killswitch("killswitch.txt");
+	for(int i = 0; i<100; i++)
+	{
+		killswitch.isActivated();
+	}
 	return 0;
 }
