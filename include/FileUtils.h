@@ -22,6 +22,8 @@ namespace Circe
 			
 			void clearFile();
 			
+			void close();
+			
 		private:
 			std::ifstream file;
 			const std::string fileName;
@@ -31,7 +33,9 @@ namespace Circe
 	class KillSwitch // Verify if file is empty. If not, "isActivated" is true;
 	{
 		public:
-			KillSwitch(const std::string& name);
+			KillSwitch();
+			
+			~KillSwitch();
 			
 			bool isActivated();
 			

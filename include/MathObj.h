@@ -4,6 +4,7 @@
 #include <ostream>
 #include <math.h>
 #include <memory>
+#include <vector>
 #include "Spinor.h"
 
 namespace Circe

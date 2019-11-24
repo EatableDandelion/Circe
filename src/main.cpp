@@ -74,10 +74,13 @@ int main()
 		std::cout << u << " " << exp(t) << std::endl;		
 	}
 	
-	KillSwitch killswitch("killswitch.txt");
-	for(int i = 0; i<100; i++)
+	KillSwitch killswitch;
+	int i = 0;
+	while(i<30 && !killswitch.isActivated())
 	{
-		killswitch.isActivated();
+		std::cin.get();
+		std::cout << i << std::endl;
+		i++;
 	}
 	return 0;
 }

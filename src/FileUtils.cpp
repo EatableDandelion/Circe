@@ -46,17 +46,36 @@ namespace Circe
 		ofs.close();
 	}
 	
+	void FileReader::close()
+	{
+		if(file.is_open())
+		{
+			file.close();
+		}
+	}
 	
-	KillSwitch::KillSwitch(const std::string& name):reader(name)
-	{}
+	KillSwitch::KillSwitch():reader("killswitch.txt")
+	{
+		std::ofstream file("killswitch.txt");
+		file.close();
+		
+	}
+	
+	KillSwitch::~KillSwitch()
+	{
+		reader.close();
+		std::remove("killswitch.txt");
+	}
 			
 	bool KillSwitch::isActivated()
 	{
 		if(!reader.isEmpty())
 		{
-			reader.clearFile();
+			reader.close();
+			std::remove("killswitch.txt");
 			return true;
 		}
+		reader.close();
 		return false;
 	}
 	
