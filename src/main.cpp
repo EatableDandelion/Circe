@@ -56,7 +56,7 @@ int main()
 	plot.addSeries("test.txt", "exp(t)", 0, 2, LineType::LINE);
 	plot.display();*/
 	
-	Polynomial p({0.0f, 0.0f, 1.5f});
+	/*Polynomial p({0.0f, 0.0f, 1.5f});
 	Polynomial p2({0.2f, 0.5f, 0.5f});
 	Polynomial p3 = Circe::LegendrePolynomial(5);
 	
@@ -72,15 +72,17 @@ int main()
 		RK4(u, m, 0.1f);
 		t += 0.1f;
 		std::cout << u << " " << exp(t) << std::endl;		
-	}
+	}*/
 	
-	KillSwitch killswitch;
+	/*KillSwitch killswitch;
 	int i = 0;
 	while(i<30 && !killswitch.isActivated())
 	{
 		std::cin.get();
 		std::cout << i << std::endl;
 		i++;
-	}
+	}*/
+	FileReader reader("FoilMesh.dat");
+	
 	return 0;
 }

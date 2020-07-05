@@ -16,10 +16,17 @@ namespace Circe
 	template<typename Real> struct Vec<4,Real>;
 	template<std::size_t N, std::size_t M, typename Real> struct Mat;
 	struct Mat44;
-	struct ITransform;
-	template<std::size_t N> struct Transform;
-	template<std::size_t N> struct Direction;
+	//struct ITransform;
+	//template<std::size_t N> struct Transform;
+	struct Transform3;
+	struct Position2;
+	struct Position3;
+	struct Direction2;
+	struct Direction3;
+	/*template<std::size_t N> struct Direction;
+	template<> struct Direction<3>;
 	template<std::size_t N> struct Position;
+	template<> struct Position<3>;*/
 	
 	enum REF_FRAME
 	{
@@ -38,6 +45,28 @@ namespace Circe
 	extern Real max(const Real& a, const Real& b)
 	{
 		return std::max(a,b);
+	}
+	
+	template<std::size_t M, typename Real>
+	Real max(const Vec<M,Real>& a)
+	{
+		Real maximum = a(0);
+		for(int i = 1; i<M; i++)
+		{
+			maximum = std::max(maximum, a(i));
+		}
+		return maximum;
+	}
+	
+	template<std::size_t M, typename Real>
+	Real min(const Vec<M,Real>& a)
+	{
+		Real minimum = a(0);
+		for(int i = 1; i<M; i++)
+		{
+			minimum = std::min(minimum, a(i));
+		}
+		return minimum;
 	}
 	
 	/*template<typename Real>
@@ -856,7 +885,7 @@ namespace Circe
 	using Vec3=Vec<3, float>;
 	using Vec4=Vec<4, float>;
 	
-	
+	/*
 	template<std::size_t N>
 	struct Position : public Vec<N>
 	{
@@ -981,6 +1010,157 @@ namespace Circe
 			std::shared_ptr<Vec<N>> vector;
 			REF_FRAME frame;
 	};
+	*/
+
+	struct Position2
+	{
+		public:
+			Position2(const REF_FRAME& frame, const float& x, const float& y);
+			
+			Position2(const REF_FRAME& frame, const Vec2 vector);
+			
+			Position2(const Position2& other);
+			
+			Position2& operator=(const Position2& other);
+			
+			Direction2 operator-(const Position2& p2);
+			
+			Position2 operator+(const Direction2& d);
+			
+			Position2 operator*(const float& f);
+			
+			void operator+=(const Direction2& d);
+			
+			Position2 operator-(const Direction2& d);
+			
+			void operator-=(const Direction2& d);
+			
+			float& operator()(const unsigned int& index);
+			
+			float operator()(const unsigned int& index) const;
+			
+			float distance2(const Position2& other);
+			
+			float distance(const Position2& other);
+			
+			REF_FRAME getFrame() const;
+			
+			Vec2 getValue() const;
+			
+		private:
+			float x, y;
+			REF_FRAME frame;
+	};
+
+	struct Position3
+	{
+		public:
+			Position3(const REF_FRAME& frame, const float& x, const float& y, const float& z);
+			
+			Position3(const REF_FRAME& frame, const Vec3 vector);
+			
+			Position3(const Position3& other);
+			
+			Position3& operator=(const Position3& other);
+			
+			Direction3 operator-(const Position3& p2);
+			
+			Position3 operator+(const Direction3& d);
+			
+			Position3 operator*(const float& f);
+			
+			void operator+=(const Direction3& d);
+			
+			Position3 operator-(const Direction3& d);
+			
+			void operator-=(const Direction3& d);
+			
+			float& operator()(const unsigned int& index);
+			
+			float operator()(const unsigned int& index) const;
+			
+			float distance2(const Position3& other);
+			
+			float distance(const Position3& other);
+			
+			REF_FRAME getFrame() const;
+			
+			Vec3 getValue() const;
+			
+		private:
+			float x, y, z;
+			REF_FRAME frame;
+	};
+	
+	struct Direction2
+	{
+		public:
+			Direction2(const REF_FRAME& frame, const float& x, const float& y);
+			
+			Direction2(const REF_FRAME& frame, const Vec2 vector);
+			
+			Direction2(const Direction2& other);
+			
+			Direction2& operator=(const Direction2& other);
+			
+			Direction2 operator+(const Direction2& d2);
+			
+			Direction2 operator-(const Direction2& d2);
+			
+			void operator*=(const float& f);
+			
+			Position2 operator+(const Position2& d2);
+			
+			Position2 operator-(const Position2& d2);
+			
+			float& operator()(const unsigned int& index);
+			
+			float operator()(const unsigned int& index) const;
+			
+			REF_FRAME getFrame() const;
+			
+			Vec2 getValue() const;
+			
+		private:
+			float x, y;
+			REF_FRAME frame;
+	};
+	
+	struct Direction3
+	{
+		public:
+			Direction3(const REF_FRAME& frame, const float& x, const float& y, const float& z);
+			
+			Direction3(const REF_FRAME& frame, const Vec3 vector);
+			
+			Direction3(const Direction3& other);
+			
+			Direction3& operator=(const Direction3& other);
+			
+			Direction3 operator+(const Direction3& d2);
+			
+			Direction3 operator-(const Direction3& d2);
+			
+			void operator*=(const float& f);
+			
+			Position3 operator+(const Position3& d2);
+			
+			Position3 operator-(const Position3& d2);
+			
+			float& operator()(const unsigned int& index);
+			
+			float operator()(const unsigned int& index) const;
+			
+			REF_FRAME getFrame() const;
+			
+			Vec3 getValue() const;
+			
+		private:
+			float x, y, z;
+			REF_FRAME frame;
+	};
+	
+	
 	
 	template<std::size_t N, std::size_t M=N, typename Real = float>
 	struct Mat
@@ -1256,12 +1436,12 @@ namespace Circe
 	struct Mat44 : public Mat<4>
 	{
 		public:
-			static Mat44 positionMatrix(const Position<2>& v)
+			static Mat44 positionMatrix(const Position2& v)
 			{
 				return Mat44::positionMatrix(v(0), v(1), 0.0f);
 			}
 			
-			static Mat44 positionMatrix(const Position<3>& v)
+			static Mat44 positionMatrix(const Position3& v)
 			{
 				return Mat44::positionMatrix(v(0), v(1), v(2));
 			}
@@ -1464,7 +1644,76 @@ namespace Circe
 			}
 	};
 	
-	struct ITransform
+	struct Transform3
+	{
+		public:
+			Transform3(const Position3& position0 = Position3(REF_FRAME::LOCAL, Vec3(0.0f, 0.0f, 0.0f)), const Quaternion& rotation = Quaternion(), const Direction3& scale = Direction3(REF_FRAME::LOCAL, Vec3(1.0f, 1.0f, 1.0f)));
+			
+			/*Transform3():Transform3(Position3(REF_FRAME::LOCAL, Vec3(0.0f, 0.0f, 0.0f)), Quaternion(), Direction3(REF_FRAME::LOCAL, Vec3(1.0f, 1.0f, 1.0f)))
+			{}*/		
+			
+			Transform3(const Transform3& transform);
+			
+			Transform3& operator=(const Transform3& transform);
+			
+			Position3 getFramePosition(const REF_FRAME& reference = REF_FRAME::LOCAL) const;
+			
+			Quaternion getFrameRotation() const;
+			
+			Direction3 getFrameScale() const;
+			
+			void setFramePosition(const Position3& newPosition);
+			
+			void setFramePosition(const float& x, const float& y, const float& z);
+			
+			void setFrameRotation(const Vec2& fwdAxis);
+			
+			void setFrameRotation(const Vec3& leftAxis, const Vec3& fwdAxis);
+			
+			void setFrameScale(const Direction3& newScale);
+			
+			void setFrameScale(const float& x, const float& y, const float& z);
+			
+			void rotate(const Direction3& eulerAngles);
+			
+			void translate(const Direction3& v);
+			
+			void resize(const float& scaleRatio);
+			
+			Mat<4> getTransformMatrix() const;
+			
+			void attachTo(const std::shared_ptr<Transform3>& parent);
+			
+			void detachFrom(const std::shared_ptr<Transform3>& parent);
+			
+			Direction3 toLocalFrame(const Direction3& direction);
+			
+			Direction3 toGlobalFrame(const Direction3 direction);
+			
+			Position3 toLocalFrame(const Position3& pos);
+			
+			Position3 toGlobalFrame(const Position3 pos);
+			
+			std::weak_ptr<Transform3> getParent();
+
+		private:
+			/** Attitude stored in LOCAL reference frame */
+			Position3 position;
+			Quaternion rotation;
+			Direction3 scale;
+			std::weak_ptr<Transform3> m_parent;
+			
+			Direction3 inThisFrame(const Direction3& direction);
+			
+			Direction3 inParentFrame(const Direction3& direction);
+			
+			Position3 inThisFrame(const Position3& pos);
+			
+			Position3 inParentFrame(const Position3& pos);
+	};
+	
+	
+	/*struct ITransform
 	{
 		virtual Mat<4> getTransformMatrix() const = 0;
 	};
@@ -1649,36 +1898,36 @@ namespace Circe
 
 		private:
 			/** Attitude stored in LOCAL reference frame */
-			Position<N> position;
+		/*	Position3 position;
 			Quaternion rotation;
-			Direction<N> scale;
-			std::weak_ptr<Transform<N>> m_parent;
+			Direction3 scale;
+			std::weak_ptr<Transform3> m_parent;
 			
-			Direction<N> inThisFrame(const Direction<N>& direction)
+			Direction3 inThisFrame(const Direction3& direction)
 			{
-				Direction<N> newDirection(REF_FRAME::LOCAL, direction.getValue().rotateInv(rotation));
+				Direction3 newDirection(REF_FRAME::LOCAL, direction.getValue().rotateInv(rotation));
 				return newDirection;
 			}
 			
-			Direction<N> inParentFrame(const Direction<N>& direction)
+			Direction3 inParentFrame(const Direction3& direction)
 			{
-				Direction<N> newDirection = Direction<N>(REF_FRAME::GLOBAL, direction.getValue().rotate(rotation));
+				Direction3 newDirection = Direction3(REF_FRAME::GLOBAL, direction.getValue().rotate(rotation));
 				return newDirection;
 			}
 			
-			Position<N> inThisFrame(const Position<N>& pos)
+			Position3 inThisFrame(const Position3& pos)
 			{
-				Position<N> newPosition(REF_FRAME::LOCAL, (pos.getValue()-position.getValue()).rotate(rotation));
+				Position3 newPosition(REF_FRAME::LOCAL, (pos.getValue()-position.getValue()).rotate(rotation));
 				return newPosition;
 			}
 			
-			Position<N> inParentFrame(const Position<N>& pos)
+			Position3 inParentFrame(const Position3& pos)
 			{
 				
-				Position<N> newPosition = Position<N>(REF_FRAME::GLOBAL, pos.getValue().rotateInv(rotation) + position.getValue());
+				Position3 newPosition = Position3(REF_FRAME::GLOBAL, pos.getValue().rotateInv(rotation) + position.getValue());
 				return newPosition;
 			}
-	};
+	};*/
 	
 	
 	
@@ -1693,27 +1942,13 @@ namespace Circe
 		return strm << "]";
 	}
 	
-	template<std::size_t N>
-	std::ostream& operator<<(std::ostream &strm, const Position<N> &v)
-	{
-		std::string frame = "(Global position)";
-		if(v.getFrame() == REF_FRAME::LOCAL)
-		{
-			frame = "(Local position)";
-		}
-		return strm << v.getValue() << frame;
-	}
+	std::ostream& operator<<(std::ostream &strm, const Position2 &v);
 	
-	template<std::size_t N>
-	std::ostream& operator<<(std::ostream &strm, const Direction<N> &v)
-	{
-		std::string frame = "(Global direction)";
-		if(v.getFrame() == REF_FRAME::LOCAL)
-		{
-			frame = "(Local direction)";
-		}
-		return strm << v.getValue() << frame;
-	}
+	std::ostream& operator<<(std::ostream &strm, const Direction2 &v);
+
+	std::ostream& operator<<(std::ostream &strm, const Position3 &v);
+	
+	std::ostream& operator<<(std::ostream &strm, const Direction3 &v);
 	
 	template<std::size_t N, std::size_t M, typename Real>
 	std::ostream& operator<<(std::ostream &strm, const Mat<N, M, Real> &m)
